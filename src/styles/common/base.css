@@ -1,0 +1,59 @@
+html {
+  width: 100%;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  font-family: var(--ja-font-sans);
+  font-size: var(--ja-font-size-medium);
+  line-height: var(--ja-line-height-normal);
+  background-color: var(--ja-color-neutral-900);
+  color: var(--ja-color-neutral-100);
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+
+  li {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+a {
+  color: var(--ja-color-neutral-200);
+  transition: color var(--ja-transition-fast) ease-in-out;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--ja-color-neutral-0);
+  }
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  color: var(--ja-color-neutral-200);
+  transition:
+    color var(--ja-transition-fast) ease-in-out,
+    background-color var(--ja-transition-fast) ease-in-out,
+    border-color var(--ja-transition-fast) ease-in-out;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--ja-color-neutral-0);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+:is(a, button, input):focus-visible {
+  outline-color: var(--ja-color-focus);
+}

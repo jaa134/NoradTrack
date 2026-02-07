@@ -1,0 +1,125 @@
+/*
+ * A Modern CSS Reset (2025 Edition)
+ * Inspired by Josh Comeau, Andy Bell, and community best practices.
+ * https://medium.com/@kaklotarrahul79
+ */
+
+/* Box-sizing: Border-box for all elements */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Prevent font size inflation on mobile */
+html {
+  -moz-text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+/* Remove default margins (except dialog for centering) */
+:not(dialog) {
+  margin: 0;
+}
+
+/* Enable smooth size interpolations for animations */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth; /* Bonus: Smooth scrolling */
+  }
+}
+
+/* Core body typography */
+body {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100svh; /* Small viewport height for full coverage */
+}
+
+/* Shorter line heights for headings and forms */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+input,
+label,
+select,
+textarea {
+  line-height: 1.1;
+}
+
+/* Balanced text wrapping */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
+/* Media elements: Responsive and block-level */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Inherit fonts in form controls */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+/* Ensure textareas have usable height */
+textarea:not([rows]) {
+  min-height: 10em;
+}
+
+/* Remove list styles only for semantic lists */
+ul[role='list'],
+ol[role='list'] {
+  list-style: none;
+  padding-inline-start: 0; /* Logical property for RTL */
+}
+
+/* Links: Skip ink on underlines */
+a:not([class]) {
+  text-decoration-skip-ink: auto;
+  color: currentColor;
+}
+
+/* Anchored elements: Extra scroll margin */
+:target {
+  scroll-margin-block: 5ex;
+}
+
+/* Isolation for root (e.g., React/Vue apps) */
+#root,
+#__next {
+  isolation: isolate;
+}
+
+/* Overflow wrapping for long words */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}

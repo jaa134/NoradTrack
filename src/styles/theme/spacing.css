@@ -1,0 +1,14 @@
+:root {
+  --ja-spacing-3x-small: 0.125rem;
+  --ja-spacing-2x-small: 0.25rem;
+  --ja-spacing-x-small: 0.5rem;
+  --ja-spacing-small: 0.75rem;
+  --ja-spacing-medium: 1rem;
+  --ja-spacing-large: 1.25rem;
+  --ja-spacing-x-large: 1.75rem;
+  --ja-spacing-2x-large: 2.25rem;
+  --ja-spacing-3x-large: 3rem;
+  --ja-spacing-4x-large: 4.5rem;
+  --ja-spacing-5x-large: 6rem;
+  --ja-spacing-6x-large: 7.5rem;
+}

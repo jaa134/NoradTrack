@@ -1,0 +1,61 @@
+<script setup lang="ts">
+  /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  import { PhGear, PhGlobeSimple, PhMapTrifold } from '@phosphor-icons/vue';
+  import { useRouter } from 'vue-router';
+
+  import ButtonControl from '@/components/common/ButtonControl.vue';
+  import ControlGroup from '@/components/common/ControlGroup.vue';
+  import { RouteName } from '@/router/index.js';
+
+  /* Router ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const router = useRouter();
+
+  /* Methods //////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const toggleSettings = () => {
+    console.log('toggleSettings');
+  };
+
+  const selectView = (routeName: RouteName) => {
+    router.push({ name: routeName });
+  };
+</script>
+
+<template>
+  <div class="settings-controls">
+    <ControlGroup orientation="vertical">
+      <ButtonControl
+        v-tooltip.left="'Map'"
+        @click="selectView(RouteName.Map)"
+      >
+        <PhMapTrifold weight="bold" />
+      </ButtonControl>
+      <ButtonControl
+        v-tooltip.left="'Globe'"
+        @click="selectView(RouteName.Globe)"
+      >
+        <PhGlobeSimple weight="bold" />
+      </ButtonControl>
+    </ControlGroup>
+    <ControlGroup orientation="vertical">
+      <ButtonControl
+        v-tooltip.left="'Settings'"
+        @click="toggleSettings"
+      >
+        <PhGear weight="bold" />
+      </ButtonControl>
+    </ControlGroup>
+  </div>
+</template>
+
+<style scoped>
+  .settings-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--ja-spacing-small);
+  }
+</style>

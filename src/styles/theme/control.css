@@ -1,0 +1,11 @@
+:root {
+  --ja-control-outline-width: 3px;
+  --ja-control-outline-style: solid;
+  --ja-control-outline-color: var(--ja-color-focus);
+  --ja-control-outline: var(--ja-control-outline-width) var(--ja-control-outline-style) var(--ja-control-outline-color);
+  --ja-control-background-color: var(--ja-color-neutral-200);
+  --ja-control-background-color-hover: var(--ja-color-neutral-300);
+  --ja-control-font-size: var(--ja-font-size-medium);
+  --ja-control-color: var(--ja-color-neutral-600);
+  --ja-control-color-placeholder: var(--ja-color-neutral-500);
+}

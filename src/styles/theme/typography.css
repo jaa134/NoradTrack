@@ -1,0 +1,34 @@
+:root {
+  --ja-font-mono: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  --ja-font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol';
+  --ja-font-serif: Georgia, 'Times New Roman', serif;
+
+  --ja-font-size-2x-small: 0.625rem;
+  --ja-font-size-x-small: 0.75rem;
+  --ja-font-size-small: 0.875rem;
+  --ja-font-size-medium: 1rem;
+  --ja-font-size-large: 1.25rem;
+  --ja-font-size-x-large: 1.5rem;
+  --ja-font-size-2x-large: 2.25rem;
+  --ja-font-size-3x-large: 3rem;
+  --ja-font-size-4x-large: 4.5rem;
+
+  --ja-font-weight-light: 300;
+  --ja-font-weight-normal: 400;
+  --ja-font-weight-semibold: 500;
+  --ja-font-weight-bold: 700;
+
+  --ja-letter-spacing-denser: -0.03em;
+  --ja-letter-spacing-dense: -0.015em;
+  --ja-letter-spacing-normal: normal;
+  --ja-letter-spacing-loose: 0.0375em;
+  --ja-letter-spacing-looser: 0.075em;
+
+  --ja-line-height-denser: 1;
+  --ja-line-height-dense: 1.4;
+  --ja-line-height-normal: 1.8;
+  --ja-line-height-loose: 2.2;
+  --ja-line-height-looser: 2.6;
+}

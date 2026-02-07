@@ -1,0 +1,16 @@
+{
+  "comment-divider.length": 120,
+  "comment-divider.lineFiller": "/",
+  "comment-divider.mainHeaderAlign": "left",
+  "comment-divider.subheaderAlign": "left",
+  "comment-divider.subheaderFiller": "/",
+  "comment-divider.shouldLengthIncludeIndent": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "eslint.workingDirectories": [{"mode": "auto"}],
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.preferences.importModuleSpecifierEnding": "js",
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.preferences.importModuleSpecifierEnding": "js",
+  "typescript.tsdk": "node_modules/typescript/lib"
+}

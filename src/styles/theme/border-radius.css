@@ -1,0 +1,10 @@
+:root {
+  --ja-border-radius-small: 0.1875rem;
+  --ja-border-radius-medium: 0.25rem;
+  --ja-border-radius-large: 0.5rem;
+  --ja-border-radius-x-large: 1rem;
+  --ja-border-radius-2x-large: 2rem;
+
+  --ja-border-radius-circle: 50%;
+  --ja-border-radius-pill: 9999px;
+}

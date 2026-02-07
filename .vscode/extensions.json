@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "stackbreak.comment-divider",
+    "stylelint.vscode-stylelint",
+    "Vue.volar",
+    "Vue.vscode-typescript-vue-plugin"
+  ]
+}
