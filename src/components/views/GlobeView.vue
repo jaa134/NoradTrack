@@ -3,10 +3,30 @@
 
   import type { GlobeInstance } from 'globe.gl';
   import Globe from 'globe.gl';
-  import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+  import { degreesLat, degreesLong, eciToGeodetic, gstime, propagate, twoline2satrec } from 'satellite.js';
+  import { Group, Mesh, MeshLambertMaterial, SphereGeometry } from 'three';
+  import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
   import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
   import { useApplicationStore } from '@/stores/variants/application.js';
+  import { getSpaceObjectDisplayText, type SpaceObject } from '@/utilities/application';
+
+  /* Types ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  interface Position {
+    latitude: number;
+    longitude: number;
+    altitude: number;
+  }
+
+  interface Marker {
+    spaceObject: SpaceObject;
+    position: Position;
+  }
+
+  /* Constants ////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const earthRadiusKm = 6371;
 
   /* Stores ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -14,7 +34,7 @@
 
   /* Cache ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const { lookupSpaceObjects } = useSpaceObjectCache();
+  const { lookupCachedSpaceObjects, getCachedSpaceObjectTle } = useSpaceObjectCache();
 
   /* Elements /////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -63,6 +83,12 @@
     globeInstance
       .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
       .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png');
+
+    // Configure space objects
+    globeInstance.objectThreeObject(() => createSpaceObjectMesh());
+    globeInstance.objectLat((marker) => (marker as Marker).position.latitude);
+    globeInstance.objectLng((marker) => (marker as Marker).position.longitude);
+    globeInstance.objectAltitude((marker) => (marker as Marker).position.altitude);
   };
 
   const destroyGlobe = () => {
@@ -74,19 +100,113 @@
     globeInstance = null;
   };
 
+  /* Geometry /////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const createSpaceObjectMesh = (): Group => {
+    const group = new Group();
+
+    const spaceObjectGeometry = new SphereGeometry(1);
+    const spaceObjectMaterial = new MeshLambertMaterial({
+      color: 'palegreen',
+      transparent: true,
+      opacity: 0.9,
+    });
+    const visibleMesh = new Mesh(spaceObjectGeometry, spaceObjectMaterial);
+    group.add(visibleMesh);
+
+    const hoverGeometry = new SphereGeometry(10);
+    const hoverMaterial = new MeshLambertMaterial({
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+    });
+    const hoverMesh = new Mesh(hoverGeometry, hoverMaterial);
+    group.add(hoverMesh);
+
+    return group;
+  };
+
   /* Selection ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const selectedNoradIds = computed(() => applicationStore.selectedNoradIds);
+  const selectedSpaceObjects = computed(() => lookupCachedSpaceObjects(Array.from(applicationStore.selectedNoradIds)));
 
-  // TODO: render selected space objects on the globe
+  const getSpaceObjectMarker = (spaceObject: SpaceObject, date: Date): Marker | null => {
+    const spaceObjectTle = getCachedSpaceObjectTle(spaceObject.noradId);
+    if (!spaceObjectTle) {
+      console.error(`Failed to get TLE lines for ${getSpaceObjectDisplayText(spaceObject)}.`);
+      return null;
+    }
+
+    const satrec = twoline2satrec(spaceObjectTle.line1, spaceObjectTle.line2);
+    const positionAndVelocity = propagate(satrec, date);
+    if (!positionAndVelocity?.position) {
+      console.error(`Failed to propagate position for ${getSpaceObjectDisplayText(spaceObject)}.`);
+      return null;
+    }
+
+    const geodetic = eciToGeodetic(positionAndVelocity.position, gstime(date));
+    const altitude = Math.max(0, geodetic.height / earthRadiusKm);
+
+    return {
+      spaceObject,
+      position: {
+        latitude: degreesLat(geodetic.latitude),
+        longitude: degreesLong(geodetic.longitude),
+        altitude,
+      },
+    };
+  };
+
+  const updateGlobeSpaceObjects = (date: Date) => {
+    if (!globeInstance) {
+      return;
+    }
+
+    const objects = selectedSpaceObjects.value
+      .map((spaceObject) => getSpaceObjectMarker(spaceObject, date))
+      .filter((marker): marker is NonNullable<typeof marker> => !!marker);
+
+    globeInstance.objectsData(objects);
+  };
+
+  watch(
+    selectedSpaceObjects,
+    () => {
+      updateGlobeSpaceObjects(new Date());
+    },
+    {
+      immediate: true,
+    },
+  );
+
+  /* Animation ////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  let animationFrame: number | null = null;
+
+  const startAnimation = () => {
+    const tick = () => {
+      updateGlobeSpaceObjects(new Date());
+      animationFrame = requestAnimationFrame(tick);
+    };
+    animationFrame = requestAnimationFrame(tick);
+  };
+
+  const stopAnimation = () => {
+    if (animationFrame !== null) {
+      cancelAnimationFrame(animationFrame);
+      animationFrame = null;
+    }
+  };
 
   /* Lifecycle ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   onMounted(() => {
     initializeGlobe();
+    startAnimation();
   });
 
   onBeforeUnmount(() => {
+    stopAnimation();
     destroyGlobe();
   });
 </script>

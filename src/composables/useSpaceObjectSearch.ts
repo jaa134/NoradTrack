@@ -12,18 +12,22 @@ import type { SpaceObject } from '@/utilities/application';
 
 const searchDebounceDelay = 250; // 250ms
 
-/* Requests ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
+/* Utilities //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-const inflightRequests = new Map<string, Promise<SpaceObject[]>>();
+const getCacheKey = (query: string) => query.trim().toLowerCase();
 
-const getInflightRequest = (normalizedQuery: string) => inflightRequests.get(normalizedQuery);
+/* Request tracking ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
-const setInflightRequest = (normalizedQuery: string, request: Promise<SpaceObject[]>) => {
-  inflightRequests.set(normalizedQuery, request);
+const inflightRequestCache = new Map<string, Promise<SpaceObject[]>>();
+
+const getInflightRequest = (cacheKey: string) => inflightRequestCache.get(cacheKey);
+
+const setInflightRequest = (cacheKey: string, request: Promise<SpaceObject[]>) => {
+  inflightRequestCache.set(cacheKey, request);
 };
 
-const clearInflightRequest = (normalizedQuery: string) => {
-  inflightRequests.delete(normalizedQuery);
+const clearInflightRequest = (cacheKey: string) => {
+  inflightRequestCache.delete(cacheKey);
 };
 
 /* Fetch //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -31,8 +35,6 @@ const clearInflightRequest = (normalizedQuery: string) => {
 const CelestrakEntrySchema = z.looseObject({
   OBJECT_NAME: z.string(),
   NORAD_CAT_ID: z.coerce.number(),
-  TLE_LINE1: z.string().nullable().optional(),
-  TLE_LINE2: z.string().nullable().optional(),
   OBJECT_ID: z.string().nullable().optional(),
   EPOCH: z.string().nullable().optional(),
   MEAN_MOTION: z.coerce.number().nullable().optional(),
@@ -55,15 +57,10 @@ type CelestrakEntry = z.infer<typeof CelestrakEntrySchema>;
 const mapCelestrakResult = (entry: CelestrakEntry): SpaceObject => {
   const name = entry.OBJECT_NAME;
   const noradId = entry.NORAD_CAT_ID;
-  const tleLine1 = entry.TLE_LINE1;
-  const tleLine2 = entry.TLE_LINE2;
-
-  const tleLines = [tleLine1, tleLine2].filter((line) => typeof line === 'string') as string[];
 
   return {
     name,
     noradId,
-    tle: tleLines.join('\n'),
     info: {
       objectId: entry.OBJECT_ID ?? null,
       epoch: entry.EPOCH ?? null,
@@ -81,7 +78,7 @@ const mapCelestrakResult = (entry: CelestrakEntry): SpaceObject => {
   };
 };
 
-const fetchCelestrakObjects = async (query: string) => {
+const fetchCelestrakSpaceObjects = async (query: string): Promise<SpaceObject[]> => {
   const normalizedQuery = query.trim();
   const isNumericQuery = /^[0-9]+$/.test(normalizedQuery);
   const searchParam = isNumericQuery ? `CATNR=${normalizedQuery}` : `NAME=${encodeURIComponent(normalizedQuery)}`;
@@ -121,7 +118,7 @@ const sortResults = (results: SpaceObject[], query: string) => {
 export const useSpaceObjectSearch = (searchText: Ref<string>) => {
   const { notify } = useNotify();
 
-  const { getResultsCacheKey, purgeExpiredCacheResults, getCachedResults, setCachedResults } = useSpaceObjectCache();
+  const { getCachedSearchResults, setCachedSearchResults } = useSpaceObjectCache();
 
   const results = shallowRef<SpaceObject[]>([]);
   const isLoading = shallowRef(false);
@@ -129,17 +126,15 @@ export const useSpaceObjectSearch = (searchText: Ref<string>) => {
   let requestCounter = 0;
   let requestDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const searchObjects = async (query: string) => {
-    const cacheKey = getResultsCacheKey(query);
+  const search = async (query: string) => {
+    const cacheKey = getCacheKey(query);
     if (!cacheKey) {
       return [];
     }
 
-    purgeExpiredCacheResults();
-
-    const cachedResults = getCachedResults(cacheKey);
-    if (cachedResults) {
-      return cachedResults;
+    const cachedSearchResults = getCachedSearchResults(cacheKey);
+    if (cachedSearchResults) {
+      return cachedSearchResults;
     }
 
     const inflightRequest = getInflightRequest(cacheKey);
@@ -149,9 +144,9 @@ export const useSpaceObjectSearch = (searchText: Ref<string>) => {
 
     const makeRequest = async () => {
       try {
-        const fetchedResults = await fetchCelestrakObjects(query);
+        const fetchedResults = await fetchCelestrakSpaceObjects(query);
         const sortedResults = sortResults(fetchedResults, query);
-        setCachedResults(cacheKey, sortedResults);
+        setCachedSearchResults(cacheKey, sortedResults);
         return sortedResults;
       } catch (error) {
         console.error(error);
@@ -161,14 +156,10 @@ export const useSpaceObjectSearch = (searchText: Ref<string>) => {
     };
 
     const request = makeRequest();
-
     setInflightRequest(cacheKey, request);
-
-    try {
-      return await request;
-    } finally {
-      clearInflightRequest(cacheKey);
-    }
+    const result = await request;
+    clearInflightRequest(cacheKey);
+    return result;
   };
 
   watch(
@@ -183,7 +174,7 @@ export const useSpaceObjectSearch = (searchText: Ref<string>) => {
 
       requestDebounceTimer = setTimeout(async () => {
         isLoading.value = true;
-        const newResults = await searchObjects(newSearchText);
+        const newResults = await search(newSearchText);
         if (requestCounter === currentRequestId) {
           results.value = newResults;
           isLoading.value = false;

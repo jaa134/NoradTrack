@@ -1,11 +1,17 @@
 <script setup lang="ts">
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  import { ref } from 'vue';
+  import { computed, ref } from 'vue';
 
   import ControlGroup from '@/components/common/ControlGroup.vue';
   import SearchControl from '@/components/common/SearchControl.vue';
   import { useSpaceObjectSearch } from '@/composables/useSpaceObjectSearch.js';
+  import { useSpaceObjectTleTracking } from '@/composables/useSpaceObjectTleTracking.js';
+  import { useApplicationStore } from '@/stores/variants/application.js';
+
+  /* Stores ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const applicationStore = useApplicationStore();
 
   /* Search ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -15,19 +21,23 @@
 
   /* Selection ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const selectedNoradIds = ref(new Set<number>());
-
   const toggleNoradId = (noradId: number) => {
-    if (selectedNoradIds.value.has(noradId)) {
-      selectedNoradIds.value.delete(noradId);
+    if (applicationStore.selectedNoradIds.has(noradId)) {
+      applicationStore.selectedNoradIds.delete(noradId);
     } else {
-      selectedNoradIds.value.add(noradId);
+      applicationStore.selectedNoradIds.add(noradId);
     }
   };
 
   const clearSelectedNoradIds = () => {
-    selectedNoradIds.value.clear();
+    applicationStore.selectedNoradIds.clear();
   };
+
+  /* TLE Tracking /////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const noradIdsToTrackTle = computed(() => Array.from(applicationStore.selectedNoradIds));
+
+  useSpaceObjectTleTracking(noradIdsToTrackTle);
 </script>
 
 <template>
@@ -50,7 +60,7 @@
       <button
         v-for="result in results"
         :key="result.noradId"
-        :class="['result', { selected: selectedNoradIds.has(result.noradId) }]"
+        :class="['result', { selected: applicationStore.selectedNoradIds.has(result.noradId) }]"
         @click="toggleNoradId(result.noradId)"
       >
         <div class="result-header">
@@ -73,7 +83,7 @@
         </div>
       </button>
       <button
-        v-if="results.length && selectedNoradIds.size"
+        v-if="results.length && applicationStore.selectedNoradIds.size"
         class="clear"
         @click="clearSelectedNoradIds"
       >
@@ -115,6 +125,16 @@
     border-radius: var(--list-border-radius);
     background-color: var(--ja-color-neutral-100);
     overflow-y: auto;
+
+    & > :first-child {
+      border-top-left-radius: var(--list-border-radius);
+      border-top-right-radius: var(--list-border-radius);
+    }
+
+    & > :last-child {
+      border-bottom-left-radius: var(--list-border-radius);
+      border-bottom-right-radius: var(--list-border-radius);
+    }
   }
 
   .empty-message {
@@ -136,16 +156,6 @@
     background-color: var(--ja-control-background-color);
     text-align: left;
     cursor: pointer;
-
-    &:first-child {
-      border-top-left-radius: var(--list-border-radius);
-      border-top-right-radius: var(--list-border-radius);
-    }
-
-    &:last-child {
-      border-bottom-left-radius: var(--list-border-radius);
-      border-bottom-right-radius: var(--list-border-radius);
-    }
 
     &:hover {
       background-color: var(--ja-control-background-color-hover);
@@ -210,14 +220,20 @@
     bottom: 0;
     width: 100%;
     padding: var(--ja-spacing-small) var(--ja-spacing-medium);
-    border: none;
-    background-color: var(--ja-color-neutral-400);
-    color: var(--ja-color-neutral-1000);
+    border: var(--ja-control-outline);
+    border-color: transparent;
+    background-color: color-mix(in srgb, var(--ja-control-background-color) 90%, var(--ja-color-neutral-1000));
+    color: var(--ja-color-neutral-950);
     font-size: var(--ja-font-size-small);
     font-weight: var(--ja-font-weight-bold);
 
     &:hover {
-      background-color: var(--ja-color-neutral-500);
+      background-color: color-mix(in srgb, var(--ja-control-background-color) 80%, var(--ja-color-neutral-1000));
+    }
+
+    &:focus-visible {
+      outline: none;
+      border: var(--ja-control-outline);
     }
   }
 </style>

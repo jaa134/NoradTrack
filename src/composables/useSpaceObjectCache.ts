@@ -1,65 +1,49 @@
 /* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-import type { SpaceObject } from '@/utilities/application';
-
-/* Types //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
-
-interface CachedSpaceObject {
-  expiresAt: number;
-  results: SpaceObject[];
-}
-
-/* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
-
-const cacheTtl = 60 * 60 * 1000; // 1 hour
+import type { SpaceObject, SpaceObjectTle } from '@/utilities/application';
 
 /* Cache //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-const resultsCache = new Map<string, CachedSpaceObject>();
+const seachResultCache = new Map<string, SpaceObject[]>();
 
 const lookupCache = new Map<number, SpaceObject>();
 
+const tleCache = new Map<number, SpaceObjectTle>();
+
 /* Utilities //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-const getResultsCacheKey = (query: string) => query.trim().toLowerCase();
-
-const purgeExpiredCacheResults = () => {
-  const now = Date.now();
-  for (const [key, entry] of resultsCache.entries()) {
-    if (entry.expiresAt <= now) {
-      resultsCache.delete(key);
-    }
-  }
+const getCachedSearchResults = (key: string) => {
+  return seachResultCache.get(key) ?? null;
 };
 
-const getCachedResults = (key: string) => {
-  const cached = resultsCache.get(key);
-  return cached?.results ?? null;
-};
-
-const setCachedResults = (key: string, results: SpaceObject[]) => {
-  resultsCache.set(key, {
-    results,
-    expiresAt: Date.now() + cacheTtl,
-  });
+const setCachedSearchResults = (key: string, results: SpaceObject[]) => {
+  seachResultCache.set(key, results);
 
   for (const result of results) {
     lookupCache.set(result.noradId, result);
   }
 };
 
-const lookupSpaceObjects = (noradIds: number[]) => {
+const lookupCachedSpaceObjects = (noradIds: number[]) => {
   return noradIds
     .map((noradId) => lookupCache.get(noradId))
     .filter((spaceObject): spaceObject is SpaceObject => !!spaceObject);
 };
 
+const getCachedSpaceObjectTle = (noradId: number) => {
+  return tleCache.get(noradId);
+};
+
+const setCachedSpaceObjectTle = (noradId: number, tle: SpaceObjectTle) => {
+  tleCache.set(noradId, tle);
+};
+
 /* Compose ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
 export const useSpaceObjectCache = () => ({
-  getResultsCacheKey,
-  purgeExpiredCacheResults,
-  getCachedResults,
-  setCachedResults,
-  lookupSpaceObjects,
+  getCachedSearchResults,
+  setCachedSearchResults,
+  lookupCachedSpaceObjects,
+  getCachedSpaceObjectTle,
+  setCachedSpaceObjectTle,
 });
