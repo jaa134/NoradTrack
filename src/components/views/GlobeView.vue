@@ -84,11 +84,18 @@
       .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
       .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png');
 
-    // Configure space objects
-    globeInstance.objectThreeObject(() => createSpaceObjectMesh());
+    // Configure geometry
+    globeInstance.objectThreeObject((marker) => createMarkerMesh(marker as Marker));
     globeInstance.objectLat((marker) => (marker as Marker).position.latitude);
     globeInstance.objectLng((marker) => (marker as Marker).position.longitude);
     globeInstance.objectAltitude((marker) => (marker as Marker).position.altitude);
+
+    // Configure labels
+    globeInstance.htmlElementsData([]);
+    globeInstance.htmlElement((marker) => createMarkerLabel(marker as Marker));
+    globeInstance.htmlLat((marker) => (marker as Marker).position.latitude);
+    globeInstance.htmlLng((marker) => (marker as Marker).position.longitude);
+    globeInstance.htmlAltitude((marker) => (marker as Marker).position.altitude);
   };
 
   const destroyGlobe = () => {
@@ -102,7 +109,7 @@
 
   /* Geometry /////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const createSpaceObjectMesh = (): Group => {
+  const createMarkerMesh = (marker: Marker): Group => {
     const group = new Group();
 
     const spaceObjectGeometry = new SphereGeometry(1);
@@ -124,6 +131,30 @@
     group.add(hoverMesh);
 
     return group;
+  };
+
+  /* Labels ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const createMarkerLabel = (marker: Marker) => {
+    const label = document.createElement('div');
+    label.textContent = marker.spaceObject.name;
+    label.style.position = 'absolute';
+    label.style.left = '50%';
+    label.style.bottom = '0';
+    label.style.transform = 'translate(-50%, -16px)';
+    label.style.padding = 'var(--ja-spacing-2x-small) var(--ja-spacing-small)';
+    label.style.borderRadius = 'var(--ja-border-radius-large)';
+    label.style.background = 'color-mix(in srgb, var(--ja-color-neutral-1000) 75%, transparent)';
+    label.style.color = 'var(--ja-color-neutral-0)';
+    label.style.fontFamily = 'var(--ja-font-sans)';
+    label.style.fontSize = 'var(--ja-font-size-small)';
+    label.style.whiteSpace = 'nowrap';
+
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.pointerEvents = 'none';
+    wrapper.appendChild(label);
+    return wrapper;
   };
 
   /* Selection ////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -167,6 +198,7 @@
       .filter((marker): marker is NonNullable<typeof marker> => !!marker);
 
     globeInstance.objectsData(objects);
+    globeInstance.htmlElementsData(objects);
   };
 
   watch(
