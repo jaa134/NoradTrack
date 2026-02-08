@@ -5,19 +5,20 @@
 
   import ButtonControl from '@/components/common/ButtonControl.vue';
   import ControlGroup from '@/components/common/ControlGroup.vue';
+  import { eventHub, EventType } from '@/utilities/application.js';
 
   /* Methods //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const fitToScreen = () => {
-    console.log('fitToScreen');
+    eventHub.emit(EventType.FitToScreen);
   };
 
   const zoomIn = () => {
-    console.log('zoomIn');
+    eventHub.emit(EventType.ZoomIn);
   };
 
   const zoomOut = () => {
-    console.log('zoomOut');
+    eventHub.emit(EventType.ZoomOut);
   };
 </script>
 

@@ -1,5 +1,6 @@
 /* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
+import mitt from 'mitt';
 import { degreesLat, degreesLong, eciToGeodetic, gstime, propagate, twoline2satrec } from 'satellite.js';
 
 /* Types //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -91,3 +92,19 @@ export const getSpaceObjectMarker = (
     altitude,
   };
 };
+
+/* Eventing ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+export enum EventType {
+  FitToScreen = 'FitToScreen',
+  ZoomIn = 'ZoomIn',
+  ZoomOut = 'ZoomOut',
+}
+
+interface EventMap {
+  [EventType.FitToScreen]: void;
+  [EventType.ZoomIn]: void;
+  [EventType.ZoomOut]: void;
+}
+
+export const eventHub = mitt<{ [T in keyof EventMap]: EventMap[T] }>();

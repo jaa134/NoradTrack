@@ -2,6 +2,7 @@
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   import { Map as OlMap } from 'ol';
+  import { easeOut } from 'ol/easing.js';
   import Feature from 'ol/Feature.js';
   import Point from 'ol/geom/Point.js';
   import { defaults as getDefaultInteractions } from 'ol/interaction.js';
@@ -16,7 +17,13 @@
   import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
   import { useApplicationStore } from '@/stores/variants/application.js';
   import { useMapStore } from '@/stores/variants/map.js';
-  import { createLabelElement, getSpaceObjectMarker, markerColor } from '@/utilities/application.js';
+  import {
+    createLabelElement,
+    eventHub,
+    EventType,
+    getSpaceObjectMarker,
+    markerColor,
+  } from '@/utilities/application.js';
 
   /* Constants ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -213,15 +220,81 @@
     }
   };
 
+  /* Zoom /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const zoom = (getZoomLevel: (view: View) => number | null | undefined, center: boolean = false) => {
+    const currentView = map?.getView();
+    if (!currentView) {
+      return;
+    }
+
+    const zoomLevel = getZoomLevel(currentView);
+    if (typeof zoomLevel !== 'number') {
+      return;
+    }
+
+    currentView.animate({
+      center: center ? [0, 0] : undefined,
+      zoom: zoomLevel,
+      duration: 500,
+      easing: easeOut,
+    });
+  };
+
+  const fitToScreen = () => {
+    const getZoomLevel = (view: View) => {
+      return view.getConstrainedZoom(view.getMinZoom());
+    };
+    zoom(getZoomLevel, true);
+  };
+
+  const zoomIn = () => {
+    const getZoomLevel = (view: View) => {
+      const currentZoom = view.getZoom();
+      if (typeof currentZoom !== 'number') {
+        return null;
+      }
+      return view.getConstrainedZoom(currentZoom + 1);
+    };
+    zoom(getZoomLevel);
+  };
+
+  const zoomOut = () => {
+    const getZoomLevel = (view: View) => {
+      const currentZoom = view.getZoom();
+      if (typeof currentZoom !== 'number') {
+        return null;
+      }
+      return view.getConstrainedZoom(currentZoom - 1);
+    };
+    zoom(getZoomLevel);
+  };
+
+  /* Eventing /////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const registerEventHandlers = () => {
+    eventHub.on(EventType.FitToScreen, fitToScreen);
+    eventHub.on(EventType.ZoomIn, zoomIn);
+    eventHub.on(EventType.ZoomOut, zoomOut);
+  };
+
+  const unregisterEventHandlers = () => {
+    eventHub.off(EventType.FitToScreen, fitToScreen);
+    eventHub.off(EventType.ZoomIn, zoomIn);
+    eventHub.off(EventType.ZoomOut, zoomOut);
+  };
+
   /* Lifecycle ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   onMounted(() => {
     initializeMap();
+    registerEventHandlers();
     startAnimation();
   });
 
   onBeforeUnmount(() => {
     stopAnimation();
+    unregisterEventHandlers();
     destroyMap();
   });
 </script>
