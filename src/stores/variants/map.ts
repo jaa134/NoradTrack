@@ -1,5 +1,7 @@
 /* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
+import { ref } from 'vue';
+
 import { createStore } from '@/utilities/store.js';
 
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -13,9 +15,21 @@ export const useMapStore = createStore(
   name,
   version,
   () => {
-    return {};
+    const center = ref<[number, number]>([0, 0]);
+
+    const zoom = ref(3);
+
+    return {
+      center,
+      zoom,
+    };
   },
   {
-    persist: true,
+    persist: [
+      {
+        storage: localStorage,
+        pick: ['center', 'zoom'],
+      },
+    ],
   },
 );

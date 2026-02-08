@@ -1,5 +1,7 @@
 /* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
+import { ref } from 'vue';
+
 import { createStore } from '@/utilities/store.js';
 
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -13,9 +15,25 @@ export const useGlobeStore = createStore(
   name,
   version,
   () => {
-    return {};
+    const pov = ref({
+      lat: 39.6,
+      lng: -98.5,
+      altitude: 1.5,
+    });
+
+    const zoom = ref(1.5);
+
+    return {
+      pov,
+      zoom,
+    };
   },
   {
-    persist: true,
+    persist: [
+      {
+        storage: localStorage,
+        pick: ['pov', 'zoom'],
+      },
+    ],
   },
 );

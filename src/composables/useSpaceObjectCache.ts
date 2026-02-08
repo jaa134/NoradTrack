@@ -1,6 +1,6 @@
 /* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-import type { SpaceObject, SpaceObjectTle } from '@/utilities/application';
+import type { SpaceObject, SpaceObjectTle } from '@/utilities/application.js';
 
 /* Cache //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -31,7 +31,7 @@ const lookupCachedSpaceObjects = (noradIds: number[]) => {
 };
 
 const getCachedSpaceObjectTle = (noradId: number) => {
-  return tleCache.get(noradId);
+  return tleCache.get(noradId) ?? null;
 };
 
 const setCachedSpaceObjectTle = (noradId: number, tle: SpaceObjectTle) => {

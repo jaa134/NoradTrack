@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 import { useNotify } from '@/composables/useNotify.js';
 import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
-import type { SpaceObject } from '@/utilities/application';
+import type { SpaceObject } from '@/utilities/application.js';
 
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
