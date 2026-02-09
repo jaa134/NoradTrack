@@ -4,7 +4,7 @@
   import { PhCheck } from '@phosphor-icons/vue';
   import { computed } from 'vue';
 
-  import { markerFocusColor } from '@/utilities/application.js';
+  import { spaceObjectMarkerFocusColor } from '@/utilities/application.js';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
 
@@ -243,8 +243,8 @@
     }
 
     &.focused {
-      border-color: v-bind('markerFocusColor');
-      background-color: v-bind('markerFocusColor');
+      border-color: v-bind('spaceObjectMarkerFocusColor');
+      background-color: v-bind('spaceObjectMarkerFocusColor');
     }
   }
 

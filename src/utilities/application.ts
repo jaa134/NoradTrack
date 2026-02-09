@@ -17,13 +17,22 @@ export interface SpaceObjectTle {
   line2: string;
 }
 
-export interface Marker {
-  name: string;
-  noradId: number;
+export interface MarkerBase {
+  label: string;
   latitude: number;
   longitude: number;
   altitude: number;
 }
+
+export interface SpaceObjectMarker extends MarkerBase {
+  noradId: number;
+}
+
+export interface UserPositionMarker extends MarkerBase {
+  accuracy: number;
+}
+
+export type Marker = SpaceObjectMarker | UserPositionMarker;
 
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -37,8 +46,10 @@ export const getSpaceObjectDisplayText = (spaceObject: SpaceObject) => {
 
 /* Styles /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-export const markerColor = 'rgb(152, 251, 152)';
-export const markerFocusColor = 'rgb(255, 45, 149)';
+export const userPositionMarkerColor = 'rgb(255, 0, 0)';
+
+export const spaceObjectMarkerColor = 'rgb(152, 251, 152)';
+export const spaceObjectMarkerFocusColor = 'rgb(255, 45, 149)';
 
 export const createLabelElement = (text: string) => {
   const label = document.createElement('div');
@@ -62,13 +73,23 @@ export const createLabelElement = (text: string) => {
   return wrapper;
 };
 
-/* Math ///////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+/* Marker /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+export const getUserPositionMarker = (userPosition: UserPosition): UserPositionMarker => {
+  return {
+    label: 'You are here',
+    latitude: userPosition.latitude,
+    longitude: userPosition.longitude,
+    altitude: 0,
+    accuracy: userPosition.accuracy,
+  };
+};
 
 export const getSpaceObjectMarker = (
   spaceObject: SpaceObject,
   getTle: (noradId: number) => SpaceObjectTle | null,
   date: Date,
-): Marker | null => {
+): SpaceObjectMarker | null => {
   const spaceObjectTle = getTle(spaceObject.noradId);
   if (!spaceObjectTle) {
     console.error(`Failed to get TLE lines for ${getSpaceObjectDisplayText(spaceObject)}.`);
@@ -86,11 +107,11 @@ export const getSpaceObjectMarker = (
   const altitude = Math.max(0, geodetic.height / earthRadiusKm);
 
   return {
-    name: spaceObject.name,
-    noradId: spaceObject.noradId,
+    label: spaceObject.name,
     latitude: degreesLat(geodetic.latitude),
     longitude: degreesLong(geodetic.longitude),
     altitude,
+    noradId: spaceObject.noradId,
   };
 };
 
@@ -109,3 +130,34 @@ interface EventMap {
 }
 
 export const eventHub = mitt<{ [T in keyof EventMap]: EventMap[T] }>();
+
+/* Position ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+export interface UserPosition {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+}
+
+export const getUserPosition = (options?: PositionOptions): Promise<UserPosition> => {
+  return new Promise((resolve, reject) => {
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+      reject(new Error('Geolocation is not supported in this environment.'));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        });
+      },
+      (error) => {
+        reject(new Error(error.message || 'Failed to get user position.'));
+      },
+      options,
+    );
+  });
+};

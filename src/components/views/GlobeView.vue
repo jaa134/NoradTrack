@@ -4,17 +4,19 @@
   import type { GlobeInstance } from 'globe.gl';
   import Globe from 'globe.gl';
   import { Group, Mesh, MeshLambertMaterial, SphereGeometry } from 'three';
-  import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+  import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
   import {
     createLabelElement,
     eventHub,
     EventType,
     getSpaceObjectMarker,
+    getUserPositionMarker,
     Marker,
-    markerColor,
-    markerFocusColor,
-    SpaceObject,
+    SpaceObjectMarker,
+    spaceObjectMarkerColor,
+    spaceObjectMarkerFocusColor,
+    userPositionMarkerColor,
   } from '@/utilities/application.js';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
@@ -93,14 +95,16 @@
 
     // Configure labels
     globe.htmlElementsData([]);
-    globe.htmlElement((marker) => createLabelElement((marker as Marker).name));
+    globe.htmlElement((marker) => createLabelElement((marker as Marker).label));
     globe.htmlLat((marker) => (marker as Marker).latitude);
     globe.htmlLng((marker) => (marker as Marker).longitude);
     globe.htmlAltitude((marker) => (marker as Marker).altitude);
 
     // Configure object focus
     globe.onObjectClick((object) => {
-      focusNoradId((object as Marker).noradId);
+      if ('noradId' in object && typeof object.noradId === 'number') {
+        focusNoradId(object.noradId);
+      }
     });
 
     // Configure POV tracking
@@ -135,14 +139,26 @@
 
   /* Object visuals ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const buildMarkerVisuals = (marker: Marker) => {
+  const buildUserPositionMarkerVisuals = () => {
+    const userPositionGeometry = new SphereGeometry(1);
+    const userPositionMaterial = new MeshLambertMaterial({
+      color: userPositionMarkerColor,
+    });
+    const userPositionMesh = new Mesh(userPositionGeometry, userPositionMaterial);
+
+    const group = new Group();
+    group.add(userPositionMesh);
+    return group;
+  };
+
+  const buildSpaceObjectMarkerVisuals = (marker: SpaceObjectMarker) => {
     const focused = applicationStore.focusedNoradId === marker.noradId;
 
     const spaceObjectGeometry = new SphereGeometry(1);
     const spaceObjectMaterial = new MeshLambertMaterial({
-      color: focused ? markerFocusColor : markerColor,
+      color: focused ? spaceObjectMarkerFocusColor : spaceObjectMarkerColor,
     });
-    const visibleMesh = new Mesh(spaceObjectGeometry, spaceObjectMaterial);
+    const spaceObjectMesh = new Mesh(spaceObjectGeometry, spaceObjectMaterial);
 
     const clickGeometry = new SphereGeometry(5);
     const clickMaterial = new MeshLambertMaterial({
@@ -153,34 +169,54 @@
     const clickMesh = new Mesh(clickGeometry, clickMaterial);
 
     const group = new Group();
-    group.add(visibleMesh);
+    group.add(spaceObjectMesh);
     group.add(clickMesh);
     return group;
   };
 
-  /* Selection ////////////////////////////////////////////////////////////////////////////////////////////////////// */
+  const buildMarkerVisuals = (marker: Marker) => {
+    if ('noradId' in marker) {
+      return buildSpaceObjectMarkerVisuals(marker);
+    }
 
-  const selectedSpaceObjects = computed(() =>
-    Array.from(applicationStore.selectedNoradIds)
-      .map((noradId) => lookupCachedSpaceObject(noradId))
-      .filter((spaceObject): spaceObject is SpaceObject => !!spaceObject),
-  );
+    return buildUserPositionMarkerVisuals();
+  };
+
+  /* Update markers ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const updateMarkers = (date: Date) => {
     if (!globe) {
       return;
     }
 
-    const objects = selectedSpaceObjects.value
-      .map((spaceObject) => getSpaceObjectMarker(spaceObject, getCachedSpaceObjectTle, date))
-      .filter((marker): marker is NonNullable<typeof marker> => !!marker);
+    let markers: Marker[] = [];
 
-    globe.objectsData(objects);
-    globe.htmlElementsData(objects);
+    if (applicationStore.userPosition) {
+      markers.push(getUserPositionMarker(applicationStore.userPosition));
+    }
+
+    for (const noradId of applicationStore.selectedNoradIds) {
+      const spaceObject = lookupCachedSpaceObject(noradId);
+      if (!spaceObject) {
+        continue;
+      }
+
+      const marker = getSpaceObjectMarker(spaceObject, getCachedSpaceObjectTle, date);
+      if (!marker) {
+        continue;
+      }
+
+      markers.push(marker);
+    }
+
+    globe.objectsData(markers);
+    globe.htmlElementsData(markers);
   };
 
+  /* Selection ////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
   watch(
-    selectedSpaceObjects,
+    () => applicationStore.selectedNoradIds,
     () => {
       updateMarkers(new Date());
     },

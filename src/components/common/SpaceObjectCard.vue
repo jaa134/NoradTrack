@@ -4,7 +4,7 @@
   import { PhArrowSquareOut, PhX } from '@phosphor-icons/vue';
   import { computed, ref, watch } from 'vue';
 
-  import { markerFocusColor, SpaceObject } from '@/utilities/application.js';
+  import { SpaceObject, spaceObjectMarkerFocusColor } from '@/utilities/application.js';
 
   import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
 
@@ -159,7 +159,7 @@
   .space-object-card {
     position: relative;
     padding: var(--ja-spacing-medium) var(--ja-spacing-large) var(--ja-spacing-large) var(--ja-spacing-large);
-    border: 3px solid v-bind('markerFocusColor');
+    border: 3px solid v-bind('spaceObjectMarkerFocusColor');
     border-radius: var(--ja-border-radius-x-large);
     background-color: var(--ja-control-background-color);
     box-shadow: var(--ja-control-box-shadow);

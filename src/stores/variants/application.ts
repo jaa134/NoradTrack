@@ -2,6 +2,7 @@
 
 import { ref, watch } from 'vue';
 
+import { getUserPosition, UserPosition } from '@/utilities/application.js';
 import { createStore } from '@/utilities/store.js';
 
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -23,6 +24,11 @@ export const useApplicationStore = createStore(
     const selectedNoradIds = ref(new Set<number>());
     const focusedNoradId = ref<number | null>(null);
 
+    const userPosition = ref<UserPosition | null>(null);
+    getUserPosition().then((position) => {
+      userPosition.value = position;
+    });
+
     watch(
       selectedNoradIds,
       (newSelectedNoradIds) => {
@@ -41,6 +47,7 @@ export const useApplicationStore = createStore(
       searchText,
       selectedNoradIds,
       focusedNoradId,
+      userPosition,
     };
   },
   {

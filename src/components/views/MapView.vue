@@ -12,17 +12,19 @@
   import { Vector as VectorSource, XYZ } from 'ol/source.js';
   import { Circle as CircleStyle, Fill, Style } from 'ol/style.js';
   import View from 'ol/View.js';
-  import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+  import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
   import {
     createLabelElement,
     eventHub,
     EventType,
     getSpaceObjectMarker,
+    getUserPositionMarker,
     Marker,
-    markerColor,
-    markerFocusColor,
-    SpaceObject,
+    SpaceObjectMarker,
+    spaceObjectMarkerColor,
+    spaceObjectMarkerFocusColor,
+    userPositionMarkerColor,
   } from '@/utilities/application.js';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
@@ -100,7 +102,7 @@
     });
     map.addLayer(tileLayer);
 
-    // Configure markers
+    // Configure markers layer
     markersLayer = new VectorLayer({
       source: new VectorSource(),
     });
@@ -113,7 +115,7 @@
       }
 
       const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => feature);
-      if (!feature) {
+      if (!feature || !feature.get('interactive') === true) {
         return;
       }
 
@@ -126,7 +128,13 @@
         return;
       }
 
-      map.getTargetElement().style.cursor = map.hasFeatureAtPixel(event.pixel) ? 'pointer' : 'grab';
+      const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => feature);
+      if (!feature || !feature.get('interactive') === true) {
+        map.getTargetElement().style.cursor = 'grab';
+        return;
+      }
+
+      map.getTargetElement().style.cursor = 'pointer';
     });
 
     // Configure position tracking
@@ -160,13 +168,24 @@
 
   /* Object visuals ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const buildMarkerVisuals = (marker: Marker) => {
+  const buildUserPositionMarkerVisuals = () => {
+    const userPositionStyle = new Style({
+      image: new CircleStyle({
+        radius: 6,
+        fill: new Fill({ color: userPositionMarkerColor }),
+      }),
+    });
+
+    return [userPositionStyle];
+  };
+
+  const buildSpaceObjectMarkerVisuals = (marker: SpaceObjectMarker) => {
     const focused = applicationStore.focusedNoradId === marker.noradId;
 
     const spaceObjectStyle = new Style({
       image: new CircleStyle({
         radius: 6,
-        fill: new Fill({ color: focused ? markerFocusColor : markerColor }),
+        fill: new Fill({ color: focused ? spaceObjectMarkerFocusColor : spaceObjectMarkerColor }),
       }),
     });
 
@@ -180,13 +199,25 @@
     return [spaceObjectStyle, clickStyle];
   };
 
-  /* Selection ////////////////////////////////////////////////////////////////////////////////////////////////////// */
+  /* Update markers ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const selectedSpaceObjects = computed(() =>
-    Array.from(applicationStore.selectedNoradIds)
-      .map((noradId) => lookupCachedSpaceObject(noradId))
-      .filter((spaceObject): spaceObject is SpaceObject => !!spaceObject),
-  );
+  const createFeatureOverlays = (marker: Marker) => {
+    const overlays = [];
+
+    for (let i = 0; i < horizontalLimitFactor; i++) {
+      const longitudeOffset = (i - Math.floor(horizontalLimitFactor / 2)) * 360;
+      const adjustedLongitude = marker.longitude + longitudeOffset;
+      const overlay = new Overlay({
+        element: createLabelElement(marker.label),
+        positioning: 'center-center',
+        stopEvent: false,
+      });
+      overlay.setPosition(fromLonLat([adjustedLongitude, marker.latitude]));
+      overlays.push(overlay);
+    }
+
+    return overlays;
+  };
 
   const updateMarkers = (date: Date) => {
     if (!map || !markersLayer) {
@@ -201,38 +232,52 @@
     source.clear();
     map.getOverlays().clear();
 
-    selectedSpaceObjects.value.forEach((spaceObject) => {
-      if (!map) {
-        return;
+    if (applicationStore.userPosition) {
+      const marker = getUserPositionMarker(applicationStore.userPosition);
+
+      const geometry = new Point(fromLonLat([marker.longitude, marker.latitude]));
+
+      const feature = new Feature<Point>(geometry);
+      feature.setId('user-position');
+      feature.setStyle(buildUserPositionMarkerVisuals());
+      source.addFeature(feature);
+
+      const overlays = createFeatureOverlays(marker);
+      for (const overlay of overlays) {
+        map.addOverlay(overlay);
+      }
+    }
+
+    for (const noradId of applicationStore.selectedNoradIds) {
+      const spaceObject = lookupCachedSpaceObject(noradId);
+      if (!spaceObject) {
+        continue;
       }
 
       const marker = getSpaceObjectMarker(spaceObject, getCachedSpaceObjectTle, date);
       if (!marker) {
-        return;
+        continue;
       }
 
-      const feature = new Feature<Point>();
+      const geometry = new Point(fromLonLat([marker.longitude, marker.latitude]));
+
+      const feature = new Feature<Point>(geometry);
       feature.setId(spaceObject.noradId);
-      feature.setGeometry(new Point(fromLonLat([marker.longitude, marker.latitude])));
-      feature.setStyle(buildMarkerVisuals(marker));
+      feature.set('interactive', true);
+      feature.setStyle(buildSpaceObjectMarkerVisuals(marker));
       source.addFeature(feature);
 
-      for (let i = 0; i < horizontalLimitFactor; i++) {
-        const longitudeOffset = (i - Math.floor(horizontalLimitFactor / 2)) * 360;
-        const adjustedLongitude = marker.longitude + longitudeOffset;
-        const overlay = new Overlay({
-          element: createLabelElement(marker.name),
-          positioning: 'center-center',
-          stopEvent: false,
-        });
-        overlay.setPosition(fromLonLat([adjustedLongitude, marker.latitude]));
+      const overlays = createFeatureOverlays(marker);
+      for (const overlay of overlays) {
         map.addOverlay(overlay);
       }
-    });
+    }
   };
 
+  /* Selection ////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
   watch(
-    selectedSpaceObjects,
+    () => applicationStore.selectedNoradIds,
     () => {
       updateMarkers(new Date());
     },
