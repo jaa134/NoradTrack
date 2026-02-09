@@ -105,7 +105,7 @@
           class="clear"
           @click="clearSelectedNoradIds"
         >
-          Clear selected
+          Clear selected ({{ applicationStore.selectedNoradIds.size }})
         </button>
       </div>
     </div>
