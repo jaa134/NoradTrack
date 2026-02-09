@@ -2,7 +2,7 @@
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   import { PhCheck } from '@phosphor-icons/vue';
-  import { computed } from 'vue';
+  import { computed, ref } from 'vue';
 
   import { spaceObjectMarkerFocusColor } from '@/utilities/application.js';
 
@@ -29,6 +29,22 @@
   });
 
   const { results, isLoading } = useSpaceObjectSearch(searchText);
+
+  /* Results visibility //////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const showResults = ref(false);
+
+  const handleFocusIn = () => {
+    showResults.value = true;
+  };
+
+  const handleFocusOut = (event: FocusEvent) => {
+    const currentTarget = event.currentTarget as HTMLElement | null;
+    const nextTarget = event.relatedTarget as Node | null;
+    if (!currentTarget || !nextTarget || !currentTarget.contains(nextTarget)) {
+      showResults.value = false;
+    }
+  };
 
   /* Selection ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -59,7 +75,11 @@
 
 <template>
   <div class="object-selection-controls">
-    <div class="section-container">
+    <div
+      class="search-container"
+      @focusin="handleFocusIn"
+      @focusout="handleFocusOut"
+    >
       <ControlGroup
         border-style="pill"
         orientation="horizontal"
@@ -72,64 +92,72 @@
       </ControlGroup>
 
       <div class="list-container">
-        <div class="loading-list">
+        <Transition
+          name="fade"
+          mode="out-in"
+        >
           <div
-            v-if="searchText && !results.length"
-            class="empty-message"
+            v-show="showResults"
+            class="loading-list"
           >
-            No results found.
+            <div
+              v-if="searchText && !results.length"
+              class="empty-message"
+            >
+              No results found.
+            </div>
+            <button
+              v-for="result in results"
+              :key="result.noradId"
+              class="result"
+              @click="toggleNoradId(result.noradId)"
+            >
+              <PhCheck
+                :class="[
+                  'icon',
+                  {
+                    selected: applicationStore.selectedNoradIds.has(result.noradId),
+                    focused: applicationStore.focusedNoradId === result.noradId,
+                  },
+                ]"
+                weight="bold"
+              />
+              <div class="result-header">
+                <span class="result-name">{{ result.name }}</span>
+                <span class="result-id">NORAD {{ result.noradId }}</span>
+              </div>
+              <div class="result-meta">
+                <span
+                  v-if="result.info.classification"
+                  class="tag"
+                >
+                  Class {{ result.info.classification }}
+                </span>
+                <span
+                  v-if="result.info.objectId"
+                  class="tag"
+                >
+                  ID {{ result.info.objectId }}
+                </span>
+              </div>
+            </button>
+            <button
+              v-if="applicationStore.selectedNoradIds.size"
+              class="clear"
+              @click="clearSelectedNoradIds"
+            >
+              Clear selected ({{ applicationStore.selectedNoradIds.size }})
+            </button>
           </div>
-          <button
-            v-for="result in results"
-            :key="result.noradId"
-            class="result"
-            @click="toggleNoradId(result.noradId)"
-          >
-            <PhCheck
-              :class="[
-                'icon',
-                {
-                  selected: applicationStore.selectedNoradIds.has(result.noradId),
-                  focused: applicationStore.focusedNoradId === result.noradId,
-                },
-              ]"
-              weight="bold"
-            />
-            <div class="result-header">
-              <span class="result-name">{{ result.name }}</span>
-              <span class="result-id">NORAD {{ result.noradId }}</span>
-            </div>
-            <div class="result-meta">
-              <span
-                v-if="result.info.classification"
-                class="tag"
-              >
-                Class {{ result.info.classification }}
-              </span>
-              <span
-                v-if="result.info.objectId"
-                class="tag"
-              >
-                ID {{ result.info.objectId }}
-              </span>
-            </div>
-          </button>
-          <button
-            v-if="applicationStore.selectedNoradIds.size"
-            class="clear"
-            @click="clearSelectedNoradIds"
-          >
-            Clear selected ({{ applicationStore.selectedNoradIds.size }})
-          </button>
-        </div>
+        </Transition>
       </div>
-
-      <SpaceObjectCard
-        v-if="typeof applicationStore.focusedNoradId === 'number'"
-        :norad-id="applicationStore.focusedNoradId"
-        @close="unfocusNoradId"
-      />
     </div>
+
+    <SpaceObjectCard
+      v-if="typeof applicationStore.focusedNoradId === 'number'"
+      :norad-id="applicationStore.focusedNoradId"
+      @close="unfocusNoradId"
+    />
   </div>
 </template>
 
@@ -138,14 +166,17 @@
     --control-width: 350px;
     --list-border-radius: var(--ja-border-radius-x-large);
 
+    display: grid;
+    grid-template-rows: 1fr auto;
     pointer-events: none;
   }
 
-  .section-container {
+  .search-container {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
+    min-height: 0;
     height: 100%;
   }
 
