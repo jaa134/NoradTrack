@@ -146,10 +146,9 @@
 <style>
   .space-object-card {
     position: relative;
-    padding: var(--ja-spacing-medium) var(--ja-spacing-large);
+    padding: var(--ja-spacing-medium) var(--ja-spacing-large) var(--ja-spacing-large) var(--ja-spacing-large);
     border-radius: var(--ja-border-radius-x-large);
     background-color: var(--ja-control-background-color);
-    box-shadow: var(--ja-shadow-2);
   }
 
   .close {
