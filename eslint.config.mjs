@@ -37,8 +37,8 @@ export default defineConfig([
             // Internal modules.
             ['^@/types(/|\\.|$)'],
             ['^@/utilities(/|\\.|$)'],
-            ['^@/stores(/|\\.|$)'],
             ['^@/router(/|\\.|$)'],
+            ['^@/stores(/|\\.|$)'],
             ['^@/composables(/|\\.|$)'],
             ['^@/components(/|\\.|$)'],
 

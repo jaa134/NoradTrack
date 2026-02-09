@@ -155,7 +155,7 @@
   </div>
 </template>
 
-<style>
+<style scoped>
   .space-object-card {
     position: relative;
     padding: var(--ja-spacing-medium) var(--ja-spacing-large) var(--ja-spacing-large) var(--ja-spacing-large);

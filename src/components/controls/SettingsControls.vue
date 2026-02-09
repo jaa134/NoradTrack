@@ -6,6 +6,8 @@
 
   import { RouteName } from '@/router/index.js';
 
+  import { useApplicationStore } from '@/stores/variants/application.js';
+
   import ButtonControl from '@/components/common/ButtonControl.vue';
   import ControlGroup from '@/components/common/ControlGroup.vue';
 
@@ -13,14 +15,20 @@
 
   const router = useRouter();
 
-  /* Methods //////////////////////////////////////////////////////////////////////////////////////////////////////// */
+  /* Stores ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const toggleSettings = () => {
-    console.log('toggleSettings');
-  };
+  const applicationStore = useApplicationStore();
+
+  /* View type ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const selectView = (routeName: RouteName) => {
     router.push({ name: routeName });
+  };
+
+  /* Settings /////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const toggleSettings = () => {
+    applicationStore.showSettingsDialog = !applicationStore.showSettingsDialog;
   };
 </script>
 

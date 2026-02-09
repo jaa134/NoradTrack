@@ -1,12 +1,14 @@
 <script setup lang="ts">
   /* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
+  import type { Feature, FeatureCollection } from 'geojson';
   import type { GlobeInstance } from 'globe.gl';
   import Globe from 'globe.gl';
   import { Group, Mesh, MeshLambertMaterial, SphereGeometry } from 'three';
-  import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+  import { onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue';
 
   import {
+    countryGeoJsonColor,
     createLabelElement,
     eventHub,
     EventType,
@@ -22,6 +24,7 @@
   import { useApplicationStore } from '@/stores/variants/application.js';
   import { useGlobeStore } from '@/stores/variants/globe.js';
 
+  import { useCountriesGeoJson } from '@/composables/useCountriesGeoJson.js';
   import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
 
   /* Stores ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -99,6 +102,12 @@
     globe.htmlLat((marker) => (marker as Marker).latitude);
     globe.htmlLng((marker) => (marker as Marker).longitude);
     globe.htmlAltitude((marker) => (marker as Marker).altitude);
+
+    // Configure countries GeoJSON
+    globe.polygonAltitude(0.01);
+    globe.polygonCapColor(() => 'rgba(0, 0, 0, 0)');
+    globe.polygonSideColor(() => 'rgba(0, 0, 0, 0)');
+    globe.polygonStrokeColor(() => countryGeoJsonColor);
 
     // Configure object focus
     globe.onObjectClick((object) => {
@@ -191,7 +200,7 @@
 
     let markers: Marker[] = [];
 
-    if (applicationStore.userPosition) {
+    if (applicationStore.showUserPosition && applicationStore.userPosition) {
       markers.push(getUserPositionMarker(applicationStore.userPosition));
     }
 
@@ -237,6 +246,37 @@
       updateMarkers(new Date());
     },
   );
+
+  /* User position ////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  watch(
+    () => applicationStore.showUserPosition,
+    () => {
+      updateMarkers(new Date());
+    },
+  );
+
+  /* Countries GeoJSON ////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const { data: countriesGeoJson } = useCountriesGeoJson();
+
+  const updateCountriesGeoJson = () => {
+    if (!globe) {
+      return;
+    }
+
+    let features: Feature[] = [];
+    if (countriesGeoJson.value && applicationStore.showCountryGeoJson) {
+      const featureCollection = structuredClone(toRaw(countriesGeoJson.value)) as FeatureCollection;
+      features = featureCollection.features;
+    }
+
+    globe.polygonsData(features);
+  };
+
+  watch([countriesGeoJson, () => applicationStore.showCountryGeoJson], () => {
+    updateCountriesGeoJson();
+  });
 
   /* Animation ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -355,6 +395,7 @@
     registerEventHandlers();
     watchResize();
     startAnimation();
+    updateCountriesGeoJson();
   });
 
   onBeforeUnmount(() => {

@@ -24,6 +24,10 @@ export const useApplicationStore = createStore(
     const selectedNoradIds = ref(new Set<number>());
     const focusedNoradId = ref<number | null>(null);
 
+    const showSettingsDialog = ref(false);
+    const showUserPosition = ref(true);
+    const showCountryGeoJson = ref(false);
+
     const userPosition = ref<UserPosition | null>(null);
     getUserPosition().then((position) => {
       userPosition.value = position;
@@ -47,13 +51,16 @@ export const useApplicationStore = createStore(
       searchText,
       selectedNoradIds,
       focusedNoradId,
+      showSettingsDialog,
+      showUserPosition,
+      showCountryGeoJson,
       userPosition,
     };
   },
   {
     persist: {
       storage: localStorage,
-      pick: ['searchText'],
+      pick: ['searchText', 'showUserPosition', 'showCountryGeoJson'],
     },
   },
 );

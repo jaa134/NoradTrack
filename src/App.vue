@@ -5,6 +5,7 @@
 
   import { useApplicationStore } from '@/stores/variants/application.js';
 
+  import SettingsDialog from '@/components/common/SettingsDialog.vue';
   import ObjectSelectionControls from '@/components/controls/ObjectSelectionControls.vue';
   import SettingsControls from '@/components/controls/SettingsControls.vue';
   import ZoomControls from '@/components/controls/ZoomControls.vue';
@@ -45,6 +46,8 @@
       />
     </Transition>
 
+    <SettingsDialog v-model="applicationStore.showSettingsDialog" />
+
     <RouterView v-slot="{ Component }">
       <Transition
         :name="transitionName"
@@ -76,8 +79,8 @@
     --controls-edge-offset: var(--ja-spacing-2x-large);
     --controls-spacer: var(--ja-spacing-medium);
 
-    z-index: 1;
     position: absolute;
+    z-index: 1;
   }
 
   .object-selection-controls {
@@ -88,11 +91,6 @@
 
   .settings-controls {
     top: var(--controls-edge-offset);
-    right: var(--controls-edge-offset);
-  }
-
-  .view-selection-controls {
-    top: calc(var(--controls-edge-offset) * 2);
     right: var(--controls-edge-offset);
   }
 

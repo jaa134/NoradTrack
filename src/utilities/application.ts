@@ -51,6 +51,8 @@ export const userPositionMarkerColor = 'rgb(255, 0, 0)';
 export const spaceObjectMarkerColor = 'rgb(152, 251, 152)';
 export const spaceObjectMarkerFocusColor = 'rgb(255, 45, 149)';
 
+export const countryGeoJsonColor = 'rgb(255, 255, 0)';
+
 export const createLabelElement = (text: string) => {
   const label = document.createElement('div');
   label.textContent = text;

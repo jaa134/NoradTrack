@@ -1,20 +1,24 @@
 <script setup lang="ts">
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
+  import type { FeatureCollection } from 'geojson';
   import { Map as OlMap } from 'ol';
   import { easeOut } from 'ol/easing.js';
   import Feature from 'ol/Feature.js';
+  import { GeoJSON as GeoJsonFormatter } from 'ol/format.js';
+  import { MultiPolygon } from 'ol/geom.js';
   import Point from 'ol/geom/Point.js';
   import { defaults as getDefaultInteractions } from 'ol/interaction.js';
   import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer.js';
   import Overlay from 'ol/Overlay.js';
   import { fromLonLat, get as getProjection, toLonLat } from 'ol/proj.js';
   import { Vector as VectorSource, XYZ } from 'ol/source.js';
-  import { Circle as CircleStyle, Fill, Style } from 'ol/style.js';
+  import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style.js';
   import View from 'ol/View.js';
-  import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+  import { onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue';
 
   import {
+    countryGeoJsonColor,
     createLabelElement,
     eventHub,
     EventType,
@@ -30,6 +34,7 @@
   import { useApplicationStore } from '@/stores/variants/application.js';
   import { useMapStore } from '@/stores/variants/map.js';
 
+  import { useCountriesGeoJson } from '@/composables/useCountriesGeoJson.js';
   import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
 
   /* Constants ////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -55,7 +60,11 @@
 
   let map: OlMap | null = null;
 
-  let markersLayer: VectorLayer<VectorSource<Feature<Point>>> | null = null;
+  const countryGeoJsonVectorSource = new VectorSource<Feature<MultiPolygon>>();
+  const countryGeoJsonLayer = new VectorLayer({ source: countryGeoJsonVectorSource });
+
+  const markersVectorSource = new VectorSource<Feature<Point>>();
+  const markersLayer = new VectorLayer({ source: markersVectorSource });
 
   const initializeMap = () => {
     if (!mapElement.value || map) {
@@ -102,10 +111,8 @@
     });
     map.addLayer(tileLayer);
 
-    // Configure markers layer
-    markersLayer = new VectorLayer({
-      source: new VectorSource(),
-    });
+    // Configure layers
+    map.addLayer(countryGeoJsonLayer);
     map.addLayer(markersLayer);
 
     // Configure object focus
@@ -220,19 +227,14 @@
   };
 
   const updateMarkers = (date: Date) => {
-    if (!map || !markersLayer) {
+    if (!map) {
       return;
     }
 
-    const source = markersLayer.getSource();
-    if (!source) {
-      return;
-    }
-
-    source.clear();
+    markersVectorSource.clear();
     map.getOverlays().clear();
 
-    if (applicationStore.userPosition) {
+    if (applicationStore.showUserPosition && applicationStore.userPosition) {
       const marker = getUserPositionMarker(applicationStore.userPosition);
 
       const geometry = new Point(fromLonLat([marker.longitude, marker.latitude]));
@@ -240,7 +242,7 @@
       const feature = new Feature<Point>(geometry);
       feature.setId('user-position');
       feature.setStyle(buildUserPositionMarkerVisuals());
-      source.addFeature(feature);
+      markersVectorSource.addFeature(feature);
 
       const overlays = createFeatureOverlays(marker);
       for (const overlay of overlays) {
@@ -265,7 +267,7 @@
       feature.setId(spaceObject.noradId);
       feature.set('interactive', true);
       feature.setStyle(buildSpaceObjectMarkerVisuals(marker));
-      source.addFeature(feature);
+      markersVectorSource.addFeature(feature);
 
       const overlays = createFeatureOverlays(marker);
       for (const overlay of overlays) {
@@ -298,6 +300,53 @@
       updateMarkers(new Date());
     },
   );
+
+  /* User position ////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  watch(
+    () => applicationStore.showUserPosition,
+    () => {
+      updateMarkers(new Date());
+    },
+  );
+
+  /* Countries GeoJSON ////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const { data: countriesGeoJson } = useCountriesGeoJson();
+
+  const countryStyle = new Style({
+    stroke: new Stroke({
+      color: countryGeoJsonColor,
+      width: 1,
+    }),
+  });
+
+  const updateCountriesGeoJson = () => {
+    if (!map) {
+      return;
+    }
+
+    countryGeoJsonVectorSource.clear();
+
+    if (!countriesGeoJson.value || !applicationStore.showCountryGeoJson) {
+      return;
+    }
+
+    const featureCollection = structuredClone(toRaw(countriesGeoJson.value)) as FeatureCollection;
+    const features = new GeoJsonFormatter<Feature<MultiPolygon>>().readFeatures(featureCollection, {
+      dataProjection: 'EPSG:4326',
+      featureProjection: map.getView().getProjection(),
+    });
+
+    for (const feature of features) {
+      feature.setStyle(countryStyle);
+      countryGeoJsonVectorSource.addFeature(feature);
+    }
+  };
+
+  watch([countriesGeoJson, () => applicationStore.showCountryGeoJson], () => {
+    updateCountriesGeoJson();
+  });
 
   /* Animation ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -425,6 +474,7 @@
     registerEventHandlers();
     watchResize();
     startAnimation();
+    updateCountriesGeoJson();
   });
 
   onBeforeUnmount(() => {
