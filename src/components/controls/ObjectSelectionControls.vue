@@ -4,6 +4,8 @@
   import { PhCheck } from '@phosphor-icons/vue';
   import { computed } from 'vue';
 
+  import { markerFocusColor } from '@/utilities/application.js';
+
   import { useApplicationStore } from '@/stores/variants/application.js';
 
   import { useSpaceObjectSearch } from '@/composables/useSpaceObjectSearch.js';
@@ -84,7 +86,13 @@
             @click="toggleNoradId(result.noradId)"
           >
             <PhCheck
-              :class="['icon', { selected: applicationStore.selectedNoradIds.has(result.noradId) }]"
+              :class="[
+                'icon',
+                {
+                  selected: applicationStore.selectedNoradIds.has(result.noradId),
+                  focused: applicationStore.focusedNoradId === result.noradId,
+                },
+              ]"
               weight="bold"
             />
             <div class="result-header">
@@ -116,17 +124,11 @@
         </div>
       </div>
 
-      <Transition
-        name="fade"
-        mode="out-in"
-      >
-        <SpaceObjectCard
-          v-if="typeof applicationStore.focusedNoradId === 'number'"
-          :key="applicationStore.focusedNoradId"
-          :norad-id="applicationStore.focusedNoradId"
-          @close="unfocusNoradId"
-        />
-      </Transition>
+      <SpaceObjectCard
+        v-if="typeof applicationStore.focusedNoradId === 'number'"
+        :norad-id="applicationStore.focusedNoradId"
+        @close="unfocusNoradId"
+      />
     </div>
   </div>
 </template>
@@ -230,10 +232,19 @@
     font-size: var(--ja-font-size-medium);
     transition: all var(--ja-transition-fast) ease-in-out;
 
+    &.selected,
+    &.focused {
+      color: var(--ja-color-neutral-0);
+    }
+
     &.selected {
       border-color: var(--ja-color-green-500);
       background-color: var(--ja-color-green-500);
-      color: var(--ja-color-neutral-0);
+    }
+
+    &.focused {
+      border-color: v-bind('markerFocusColor');
+      background-color: v-bind('markerFocusColor');
     }
   }
 

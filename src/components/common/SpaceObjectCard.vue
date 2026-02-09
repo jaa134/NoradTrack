@@ -4,7 +4,7 @@
   import { PhArrowSquareOut, PhX } from '@phosphor-icons/vue';
   import { computed, ref, watch } from 'vue';
 
-  import { SpaceObject } from '@/utilities/application.js';
+  import { markerFocusColor, SpaceObject } from '@/utilities/application.js';
 
   import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
 
@@ -95,52 +95,63 @@
     >
       <PhX weight="bold" />
     </button>
-    <div class="header">
-      <div class="title">{{ spaceObject.name }}</div>
-      <a
-        v-tooltip.top="'Learn more'"
-        class="link"
-        :href="link"
-        target="_blank"
-        rel="noopener noreferrer"
+
+    <Transition
+      name="fade"
+      mode="out-in"
+    >
+      <div
+        :key="spaceObject.noradId"
+        class="content"
       >
-        <PhArrowSquareOut weight="bold" />
-      </a>
-    </div>
-    <div class="grid">
-      <div class="item">
-        <span class="label">Norad ID</span>
-        <span class="value">{{ spaceObject.noradId }}</span>
+        <div class="header">
+          <div class="title">{{ spaceObject.name }}</div>
+          <a
+            v-tooltip.top="'Learn more'"
+            class="link"
+            :href="link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <PhArrowSquareOut weight="bold" />
+          </a>
+        </div>
+        <div class="grid">
+          <div class="item">
+            <span class="label">Norad ID</span>
+            <span class="value">{{ spaceObject.noradId }}</span>
+          </div>
+          <div class="item">
+            <span class="label">Object ID</span>
+            <span class="value">{{ formatText(spaceObject.info.objectId) }}</span>
+          </div>
+          <div class="item">
+            <span class="label">Class</span>
+            <span class="value">{{ formatText(spaceObject.info.classification) }}</span>
+          </div>
+          <div class="item">
+            <span class="label">Epoch</span>
+            <span class="value">{{ formatEpoch(spaceObject.info.epoch) }}</span>
+          </div>
+          <div class="item">
+            <span class="label">Mean motion</span>
+            <span class="value">{{ formatNumber(spaceObject.info.meanMotion, 2, 'rev/day') }}</span>
+          </div>
+          <div class="item">
+            <span class="label">Inclination</span>
+            <span class="value">{{ formatNumber(spaceObject.info.inclination, 3, 'deg') }}</span>
+          </div>
+          <div class="item">
+            <span class="label">Eccentricity</span>
+            <span class="value">{{ formatNumber(spaceObject.info.eccentricity, 6) }}</span>
+          </div>
+          <div class="item">
+            <span class="label">Rev at epoch</span>
+            <span class="value">{{ formatNumber(spaceObject.info.revAtEpoch, 0) }}</span>
+          </div>
+        </div>
       </div>
-      <div class="item">
-        <span class="label">Object ID</span>
-        <span class="value">{{ formatText(spaceObject.info.objectId) }}</span>
-      </div>
-      <div class="item">
-        <span class="label">Class</span>
-        <span class="value">{{ formatText(spaceObject.info.classification) }}</span>
-      </div>
-      <div class="item">
-        <span class="label">Epoch</span>
-        <span class="value">{{ formatEpoch(spaceObject.info.epoch) }}</span>
-      </div>
-      <div class="item">
-        <span class="label">Mean motion</span>
-        <span class="value">{{ formatNumber(spaceObject.info.meanMotion, 2, 'rev/day') }}</span>
-      </div>
-      <div class="item">
-        <span class="label">Inclination</span>
-        <span class="value">{{ formatNumber(spaceObject.info.inclination, 3, 'deg') }}</span>
-      </div>
-      <div class="item">
-        <span class="label">Eccentricity</span>
-        <span class="value">{{ formatNumber(spaceObject.info.eccentricity, 6) }}</span>
-      </div>
-      <div class="item">
-        <span class="label">Rev at epoch</span>
-        <span class="value">{{ formatNumber(spaceObject.info.revAtEpoch, 0) }}</span>
-      </div>
-    </div>
+    </Transition>
   </div>
 </template>
 
@@ -148,6 +159,7 @@
   .space-object-card {
     position: relative;
     padding: var(--ja-spacing-medium) var(--ja-spacing-large) var(--ja-spacing-large) var(--ja-spacing-large);
+    border: 3px solid v-bind('markerFocusColor');
     border-radius: var(--ja-border-radius-x-large);
     background-color: var(--ja-control-background-color);
     box-shadow: var(--ja-control-box-shadow);
