@@ -25,7 +25,10 @@
 
 <template>
   <div class="settings-controls">
-    <ControlGroup orientation="vertical">
+    <ControlGroup
+      border-style="round"
+      orientation="vertical"
+    >
       <ButtonControl
         v-tooltip.left="'Map'"
         @click="selectView(RouteName.Map)"
@@ -39,7 +42,10 @@
         <PhGlobeSimple weight="bold" />
       </ButtonControl>
     </ControlGroup>
-    <ControlGroup orientation="vertical">
+    <ControlGroup
+      border-style="round"
+      orientation="vertical"
+    >
       <ButtonControl
         v-tooltip.left="'Settings'"
         @click="toggleSettings"

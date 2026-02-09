@@ -24,7 +24,10 @@
 
 <template>
   <div class="zoom-controls">
-    <ControlGroup orientation="vertical">
+    <ControlGroup
+      border-style="round"
+      orientation="vertical"
+    >
       <ButtonControl
         v-tooltip.left="'Fit to screen'"
         @click="fitToScreen"

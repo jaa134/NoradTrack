@@ -55,72 +55,77 @@
 
 <template>
   <div class="object-selection-controls">
-    <ControlGroup>
-      <SearchControl
-        v-model="searchText"
-        :loading="isLoading"
-        placeholder="Search objects"
-      />
-    </ControlGroup>
+    <div class="section-container">
+      <ControlGroup
+        border-style="pill"
+        orientation="horizontal"
+      >
+        <SearchControl
+          v-model="searchText"
+          :loading="isLoading"
+          placeholder="Search objects"
+        />
+      </ControlGroup>
 
-    <div class="list-container">
-      <div class="loading-list">
-        <div
-          v-if="searchText && !results.length"
-          class="empty-message"
-        >
-          No results found.
+      <div class="list-container">
+        <div class="loading-list">
+          <div
+            v-if="searchText && !results.length"
+            class="empty-message"
+          >
+            No results found.
+          </div>
+          <button
+            v-for="result in results"
+            :key="result.noradId"
+            class="result"
+            @click="toggleNoradId(result.noradId)"
+          >
+            <PhCheck
+              :class="['icon', { selected: applicationStore.selectedNoradIds.has(result.noradId) }]"
+              weight="bold"
+            />
+            <div class="result-header">
+              <span class="result-name">{{ result.name }}</span>
+              <span class="result-id">NORAD {{ result.noradId }}</span>
+            </div>
+            <div class="result-meta">
+              <span
+                v-if="result.info.classification"
+                class="tag"
+              >
+                Class {{ result.info.classification }}
+              </span>
+              <span
+                v-if="result.info.objectId"
+                class="tag"
+              >
+                ID {{ result.info.objectId }}
+              </span>
+            </div>
+          </button>
+          <button
+            v-if="applicationStore.selectedNoradIds.size"
+            class="clear"
+            @click="clearSelectedNoradIds"
+          >
+            Clear selected ({{ applicationStore.selectedNoradIds.size }})
+          </button>
         </div>
-        <button
-          v-for="result in results"
-          :key="result.noradId"
-          class="result"
-          @click="toggleNoradId(result.noradId)"
-        >
-          <PhCheck
-            :class="['icon', { selected: applicationStore.selectedNoradIds.has(result.noradId) }]"
-            weight="bold"
-          />
-          <div class="result-header">
-            <span class="result-name">{{ result.name }}</span>
-            <span class="result-id">NORAD {{ result.noradId }}</span>
-          </div>
-          <div class="result-meta">
-            <span
-              v-if="result.info.classification"
-              class="tag"
-            >
-              Class {{ result.info.classification }}
-            </span>
-            <span
-              v-if="result.info.objectId"
-              class="tag"
-            >
-              ID {{ result.info.objectId }}
-            </span>
-          </div>
-        </button>
-        <button
-          v-if="applicationStore.selectedNoradIds.size"
-          class="clear"
-          @click="clearSelectedNoradIds"
-        >
-          Clear selected ({{ applicationStore.selectedNoradIds.size }})
-        </button>
       </div>
-    </div>
 
-    <Transition
-      name="fade"
-      mode="out-in"
-    >
-      <SpaceObjectCard
-        v-if="typeof applicationStore.focusedNoradId === 'number'"
-        :key="applicationStore.focusedNoradId"
-        :norad-id="applicationStore.focusedNoradId"
-        @close="unfocusNoradId"
-      />
-    </Transition>
+      <Transition
+        name="fade"
+        mode="out-in"
+      >
+        <SpaceObjectCard
+          v-if="typeof applicationStore.focusedNoradId === 'number'"
+          :key="applicationStore.focusedNoradId"
+          :norad-id="applicationStore.focusedNoradId"
+          @close="unfocusNoradId"
+        />
+      </Transition>
+    </div>
   </div>
 </template>
 
@@ -129,12 +134,15 @@
     --control-width: 350px;
     --list-border-radius: var(--ja-border-radius-x-large);
 
+    pointer-events: none;
+  }
+
+  .section-container {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    gap: var(--ja-spacing-small);
-    pointer-events: none;
+    height: 100%;
   }
 
   .control-group,
@@ -144,11 +152,13 @@
 
   .control-group {
     width: var(--control-width);
+    margin-bottom: var(--ja-spacing-small);
   }
 
   .list-container {
-    flex: 1;
-    overflow: hidden;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-bottom: var(--ja-spacing-2x-large);
   }
 
   .loading-list {
@@ -161,6 +171,7 @@
     max-height: 100%;
     border-radius: var(--list-border-radius);
     background-color: var(--ja-color-neutral-200);
+    box-shadow: var(--ja-control-box-shadow);
     overflow-y: auto;
 
     & > :first-child {
@@ -283,6 +294,7 @@
   }
 
   .space-object-card {
+    flex: 0 0 auto;
     pointer-events: auto;
   }
 </style>

@@ -2,16 +2,15 @@
   /* Props ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   export interface ControlGroupProps {
-    orientation?: 'horizontal' | 'vertical';
+    borderStyle: 'round' | 'pill';
+    orientation: 'horizontal' | 'vertical';
   }
 
-  const props = withDefaults(defineProps<ControlGroupProps>(), {
-    orientation: 'horizontal',
-  });
+  const props = defineProps<ControlGroupProps>();
 </script>
 
 <template>
-  <div :class="['control-group', orientation]">
+  <div :class="['control-group', borderStyle, orientation]">
     <slot></slot>
   </div>
 </template>
@@ -21,10 +20,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: var(--ja-control-box-shadow);
 
     & > *:focus-visible,
     & > *:has(*:focus-visible) {
       z-index: 1;
+    }
+
+    &.round {
+      border-radius: var(--ja-control-border-radius-round);
+    }
+
+    &.pill {
+      border-radius: var(--ja-control-border-radius-pill);
     }
 
     &.horizontal {

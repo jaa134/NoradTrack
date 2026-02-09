@@ -82,7 +82,7 @@
     padding: 0 var(--ja-spacing-medium);
     width: 100%;
     height: 40px;
-    border-radius: var(--ja-border-radius-pill);
+    border-radius: var(--ja-control-border-radius-pill);
     background-color: var(--ja-control-background-color);
     color: var(--ja-control-color);
     font-size: var(--ja-control-font-size);

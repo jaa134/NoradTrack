@@ -13,7 +13,7 @@
     justify-content: center;
     padding: var(--ja-spacing-small);
     border: none;
-    border-radius: var(--ja-border-radius-large);
+    border-radius: var(--ja-control-border-radius-round);
     background-color: var(--ja-control-background-color);
     color: var(--ja-control-color);
     font-size: var(--ja-control-font-size);
