@@ -5,6 +5,8 @@ import { ref, watch } from 'vue';
 import { getUserPosition, UserPosition } from '@/utilities/application.js';
 import { createStore } from '@/utilities/store.js';
 
+import { useNotify } from '@/composables/useNotify.js';
+
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
 const name = 'application';
@@ -16,6 +18,8 @@ export const useApplicationStore = createStore(
   name,
   version,
   () => {
+    const { notify } = useNotify();
+
     const routerLoading = ref(false);
     const routerError = ref<string | null>(null);
 
@@ -29,9 +33,14 @@ export const useApplicationStore = createStore(
     const showCountryGeoJson = ref(false);
 
     const userPosition = ref<UserPosition | null>(null);
-    getUserPosition().then((position) => {
-      userPosition.value = position;
-    });
+    getUserPosition()
+      .then((position) => {
+        userPosition.value = position;
+      })
+      .catch((error) => {
+        console.error(error);
+        notify('error', 'Failed to get your location.');
+      });
 
     watch(
       selectedNoradIds,
