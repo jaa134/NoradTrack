@@ -37,7 +37,8 @@ export const getSpaceObjectDisplayText = (spaceObject: SpaceObject) => {
 
 /* Styles /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-export const markerColor = 'palegreen';
+export const markerColor = 'rgb(152, 251, 152)';
+export const markerFocusColor = 'rgb(255, 45, 149)';
 
 export const createLabelElement = (text: string) => {
   const label = document.createElement('div');

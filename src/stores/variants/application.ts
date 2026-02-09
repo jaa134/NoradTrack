@@ -1,6 +1,6 @@
 /* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 import { createStore } from '@/utilities/store.js';
 
@@ -21,7 +21,19 @@ export const useApplicationStore = createStore(
     const searchText = ref('YAM-');
 
     const selectedNoradIds = ref(new Set<number>());
-    const focusedNoradId = ref<number | null>(48915);
+    const focusedNoradId = ref<number | null>(null);
+
+    watch(
+      selectedNoradIds,
+      (newSelectedNoradIds) => {
+        if (focusedNoradId.value && !newSelectedNoradIds.has(focusedNoradId.value)) {
+          focusedNoradId.value = null;
+        }
+      },
+      {
+        deep: true,
+      },
+    );
 
     return {
       routerLoading,

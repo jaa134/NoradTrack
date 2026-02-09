@@ -9,7 +9,14 @@
   import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
   import { useApplicationStore } from '@/stores/variants/application.js';
   import { useGlobeStore } from '@/stores/variants/globe.js';
-  import { createLabelElement, getSpaceObjectMarker, Marker, markerColor } from '@/utilities/application.js';
+  import {
+    createLabelElement,
+    getSpaceObjectMarker,
+    Marker,
+    markerColor,
+    markerFocusColor,
+    SpaceObject,
+  } from '@/utilities/application.js';
 
   /* Stores ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -19,7 +26,7 @@
 
   /* Cache ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const { lookupCachedSpaceObjects, getCachedSpaceObjectTle } = useSpaceObjectCache();
+  const { lookupCachedSpaceObject, getCachedSpaceObjectTle } = useSpaceObjectCache();
 
   /* Elements /////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -74,10 +81,11 @@
       .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png');
 
     // Configure markers
-    globeInstance.objectThreeObject(() => createMarkerMesh());
+    globeInstance.objectThreeObject((marker) => buildMarkerVisuals(marker as Marker));
     globeInstance.objectLat((marker) => (marker as Marker).latitude);
     globeInstance.objectLng((marker) => (marker as Marker).longitude);
     globeInstance.objectAltitude((marker) => (marker as Marker).altitude);
+    globeInstance.objectLabel(() => '');
 
     // Configure labels
     globeInstance.htmlElementsData([]);
@@ -85,6 +93,11 @@
     globeInstance.htmlLat((marker) => (marker as Marker).latitude);
     globeInstance.htmlLng((marker) => (marker as Marker).longitude);
     globeInstance.htmlAltitude((marker) => (marker as Marker).altitude);
+
+    // Configure object focus
+    globeInstance.onObjectClick((object) => {
+      focusNoradId((object as Marker).noradId);
+    });
 
     // Configure POV tracking
     controls.addEventListener('change', () => {
@@ -114,31 +127,36 @@
 
   /* Object visuals ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const createMarkerMesh = (): Group => {
-    const group = new Group();
+  const buildMarkerVisuals = (marker: Marker) => {
+    const focused = applicationStore.focusedNoradId === marker.noradId;
 
     const spaceObjectGeometry = new SphereGeometry(1);
     const spaceObjectMaterial = new MeshLambertMaterial({
-      color: markerColor,
+      color: focused ? markerFocusColor : markerColor,
     });
     const visibleMesh = new Mesh(spaceObjectGeometry, spaceObjectMaterial);
-    group.add(visibleMesh);
 
-    const hoverGeometry = new SphereGeometry(10);
-    const hoverMaterial = new MeshLambertMaterial({
+    const clickGeometry = new SphereGeometry(5);
+    const clickMaterial = new MeshLambertMaterial({
       transparent: true,
       opacity: 0,
       depthWrite: false,
     });
-    const hoverMesh = new Mesh(hoverGeometry, hoverMaterial);
-    group.add(hoverMesh);
+    const clickMesh = new Mesh(clickGeometry, clickMaterial);
 
+    const group = new Group();
+    group.add(visibleMesh);
+    group.add(clickMesh);
     return group;
   };
 
   /* Selection ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const selectedSpaceObjects = computed(() => lookupCachedSpaceObjects(Array.from(applicationStore.selectedNoradIds)));
+  const selectedSpaceObjects = computed(() =>
+    Array.from(applicationStore.selectedNoradIds)
+      .map((noradId) => lookupCachedSpaceObject(noradId))
+      .filter((spaceObject): spaceObject is SpaceObject => !!spaceObject),
+  );
 
   const updateMarkers = (date: Date) => {
     if (!globeInstance) {
@@ -160,6 +178,19 @@
     },
     {
       immediate: true,
+    },
+  );
+
+  /* Focus ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const focusNoradId = (noradId: number) => {
+    applicationStore.focusedNoradId = noradId;
+  };
+
+  watch(
+    () => applicationStore.focusedNoradId,
+    () => {
+      updateMarkers(new Date());
     },
   );
 

@@ -24,10 +24,8 @@ const setCachedSearchResults = (key: string, results: SpaceObject[]) => {
   }
 };
 
-const lookupCachedSpaceObjects = (noradIds: number[]) => {
-  return noradIds
-    .map((noradId) => lookupCache.get(noradId))
-    .filter((spaceObject): spaceObject is SpaceObject => !!spaceObject);
+const lookupCachedSpaceObject = (noradId: number) => {
+  return lookupCache.get(noradId) ?? null;
 };
 
 const getCachedSpaceObjectTle = (noradId: number) => {
@@ -43,7 +41,7 @@ const setCachedSpaceObjectTle = (noradId: number, tle: SpaceObjectTle) => {
 export const useSpaceObjectCache = () => ({
   getCachedSearchResults,
   setCachedSearchResults,
-  lookupCachedSpaceObjects,
+  lookupCachedSpaceObject,
   getCachedSpaceObjectTle,
   setCachedSpaceObjectTle,
 });

@@ -22,7 +22,10 @@
     eventHub,
     EventType,
     getSpaceObjectMarker,
+    Marker,
     markerColor,
+    markerFocusColor,
+    SpaceObject,
   } from '@/utilities/application.js';
 
   /* Constants ////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -38,7 +41,7 @@
 
   /* Cache ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const { lookupCachedSpaceObjects, getCachedSpaceObjectTle } = useSpaceObjectCache();
+  const { lookupCachedSpaceObject, getCachedSpaceObjectTle } = useSpaceObjectCache();
 
   /* Elements /////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -101,12 +104,36 @@
     });
     map.addLayer(markersLayer);
 
-    // Configure position tracking
-    map.on('moveend', () => {
-      const view = map?.getView();
-      if (!view) {
+    // Configure object focus
+    map.on('singleclick', (event) => {
+      if (!map) {
         return;
       }
+
+      const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => feature);
+      if (!feature) {
+        return;
+      }
+
+      focusNoradId(Number(feature.getId()));
+    });
+
+    // Configure cursor style
+    map.on('pointermove', (event) => {
+      if (!map) {
+        return;
+      }
+
+      map.getTargetElement().style.cursor = map.hasFeatureAtPixel(event.pixel) ? 'pointer' : 'grab';
+    });
+
+    // Configure position tracking
+    map.on('moveend', () => {
+      if (!map) {
+        return;
+      }
+
+      const view = map.getView();
 
       const center = view.getCenter();
       if (center) {
@@ -131,18 +158,33 @@
 
   /* Object visuals ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const buildMarkerStyle = () => {
-    return new Style({
+  const buildMarkerVisuals = (marker: Marker) => {
+    const focused = applicationStore.focusedNoradId === marker.noradId;
+
+    const spaceObjectStyle = new Style({
       image: new CircleStyle({
         radius: 6,
-        fill: new Fill({ color: markerColor }),
+        fill: new Fill({ color: focused ? markerFocusColor : markerColor }),
       }),
     });
+
+    const clickStyle = new Style({
+      image: new CircleStyle({
+        radius: 30,
+        fill: new Fill({ color: 'rgba(0, 0, 0, 0)' }),
+      }),
+    });
+
+    return [spaceObjectStyle, clickStyle];
   };
 
   /* Selection ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const selectedSpaceObjects = computed(() => lookupCachedSpaceObjects(Array.from(applicationStore.selectedNoradIds)));
+  const selectedSpaceObjects = computed(() =>
+    Array.from(applicationStore.selectedNoradIds)
+      .map((noradId) => lookupCachedSpaceObject(noradId))
+      .filter((spaceObject): spaceObject is SpaceObject => !!spaceObject),
+  );
 
   const updateMarkers = (date: Date) => {
     if (!markersLayer) {
@@ -166,7 +208,7 @@
       const feature = new Feature<Point>();
       feature.setId(spaceObject.noradId);
       feature.setGeometry(new Point(fromLonLat([marker.longitude, marker.latitude])));
-      feature.setStyle(buildMarkerStyle());
+      feature.setStyle(buildMarkerVisuals(marker));
       source.addFeature(feature);
 
       for (let i = 0; i < horizontalLimitFactor; i++) {
@@ -190,6 +232,19 @@
     },
     {
       immediate: true,
+    },
+  );
+
+  /* Focus ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const focusNoradId = (noradId: number) => {
+    applicationStore.focusedNoradId = noradId;
+  };
+
+  watch(
+    () => applicationStore.focusedNoradId,
+    () => {
+      updateMarkers(new Date());
     },
   );
 

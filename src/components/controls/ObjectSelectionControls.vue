@@ -1,10 +1,12 @@
 <script setup lang="ts">
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
+  import { PhCheck } from '@phosphor-icons/vue';
   import { computed } from 'vue';
 
   import ControlGroup from '@/components/common/ControlGroup.vue';
   import SearchControl from '@/components/common/SearchControl.vue';
+  import SpaceObjectCard from '@/components/common/SpaceObjectCard.vue';
   import { useSpaceObjectSearch } from '@/composables/useSpaceObjectSearch.js';
   import { useSpaceObjectTleTracking } from '@/composables/useSpaceObjectTleTracking.js';
   import { useApplicationStore } from '@/stores/variants/application.js';
@@ -38,6 +40,12 @@
     applicationStore.selectedNoradIds.clear();
   };
 
+  /* Focus ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const unfocusNoradId = () => {
+    applicationStore.focusedNoradId = null;
+  };
+
   /* TLE Tracking /////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const noradIdsToTrackTle = computed(() => Array.from(applicationStore.selectedNoradIds));
@@ -55,57 +63,75 @@
       />
     </ControlGroup>
 
-    <div class="loading-list">
-      <div
-        v-if="searchText && !results.length"
-        class="empty-message"
-      >
-        No results found.
+    <div class="list-container">
+      <div class="loading-list">
+        <div
+          v-if="searchText && !results.length"
+          class="empty-message"
+        >
+          No results found.
+        </div>
+        <button
+          v-for="result in results"
+          :key="result.noradId"
+          class="result"
+          @click="toggleNoradId(result.noradId)"
+        >
+          <PhCheck
+            :class="['icon', { selected: applicationStore.selectedNoradIds.has(result.noradId) }]"
+            weight="bold"
+          />
+          <div class="result-header">
+            <span class="result-name">{{ result.name }}</span>
+            <span class="result-id">NORAD {{ result.noradId }}</span>
+          </div>
+          <div class="result-meta">
+            <span
+              v-if="result.info.classification"
+              class="tag"
+            >
+              Class {{ result.info.classification }}
+            </span>
+            <span
+              v-if="result.info.objectId"
+              class="tag"
+            >
+              ID {{ result.info.objectId }}
+            </span>
+          </div>
+        </button>
+        <button
+          v-if="applicationStore.selectedNoradIds.size"
+          class="clear"
+          @click="clearSelectedNoradIds"
+        >
+          Clear selected
+        </button>
       </div>
-      <button
-        v-for="result in results"
-        :key="result.noradId"
-        :class="['result', { selected: applicationStore.selectedNoradIds.has(result.noradId) }]"
-        @click="toggleNoradId(result.noradId)"
-      >
-        <div class="result-header">
-          <span class="result-name">{{ result.name }}</span>
-          <span class="result-id">NORAD {{ result.noradId }}</span>
-        </div>
-        <div class="result-meta">
-          <span
-            v-if="result.info.classification"
-            class="tag"
-          >
-            Class {{ result.info.classification }}
-          </span>
-          <span
-            v-if="result.info.objectId"
-            class="tag"
-          >
-            ID {{ result.info.objectId }}
-          </span>
-        </div>
-      </button>
-      <button
-        v-if="results.length && applicationStore.selectedNoradIds.size"
-        class="clear"
-        @click="clearSelectedNoradIds"
-      >
-        Clear selected
-      </button>
     </div>
+
+    <Transition
+      name="fade"
+      mode="out-in"
+    >
+      <SpaceObjectCard
+        v-if="typeof applicationStore.focusedNoradId === 'number'"
+        :key="applicationStore.focusedNoradId"
+        :norad-id="applicationStore.focusedNoradId"
+        @close="unfocusNoradId"
+      />
+    </Transition>
   </div>
 </template>
 
 <style scoped>
   .object-selection-controls {
-    --control-width: 380px;
-    --list-border-radius: var(--ja-border-radius-large);
+    --control-width: 350px;
+    --list-border-radius: var(--ja-border-radius-x-large);
 
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
     gap: var(--ja-spacing-small);
     pointer-events: none;
@@ -120,15 +146,21 @@
     width: var(--control-width);
   }
 
+  .list-container {
+    flex: 1;
+    overflow: hidden;
+  }
+
   .loading-list {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
     gap: 1px;
-    width: calc(var(--control-width) - var(--ja-spacing-large));
+    width: var(--control-width);
+    max-height: 100%;
     border-radius: var(--list-border-radius);
-    background-color: var(--ja-color-neutral-100);
+    background-color: var(--ja-color-neutral-200);
     overflow-y: auto;
 
     & > :first-child {
@@ -147,14 +179,15 @@
     padding: var(--ja-spacing-medium);
     text-align: center;
     font-size: var(--ja-font-size-small);
-    color: var(--ja-color-neutral-500);
+    color: var(--ja-color-neutral-600);
   }
 
   .result {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--ja-spacing-2x-small);
-    padding: var(--ja-spacing-small) var(--ja-spacing-medium);
+    padding: var(--ja-spacing-small) var(--ja-spacing-medium) var(--ja-spacing-small) var(--ja-spacing-3x-large);
     width: 100%;
     border: var(--ja-control-outline);
     border-color: transparent;
@@ -166,21 +199,28 @@
       background-color: var(--ja-control-background-color-hover);
     }
 
-    &.selected {
-      background-color: color-mix(in srgb, var(--ja-color-primary-600) 50%, transparent);
-
-      .result-name {
-        color: var(--ja-color-neutral-900);
-      }
-
-      .result-id {
-        color: var(--ja-color-neutral-700);
-      }
-    }
-
     &:focus-visible {
       outline: none;
       border: var(--ja-control-outline);
+    }
+  }
+
+  .icon {
+    position: absolute;
+    left: var(--ja-spacing-medium);
+    top: 50%;
+    transform: translateY(-50%);
+    border: 1px solid var(--ja-color-neutral-400);
+    border-radius: var(--ja-border-radius-small);
+    background-color: transparent;
+    color: transparent;
+    font-size: var(--ja-font-size-medium);
+    transition: all var(--ja-transition-fast) ease-in-out;
+
+    &.selected {
+      border-color: var(--ja-color-green-500);
+      background-color: var(--ja-color-green-500);
+      color: var(--ja-color-neutral-0);
     }
   }
 
@@ -215,9 +255,9 @@
   .tag {
     padding: var(--ja-spacing-3x-small) var(--ja-spacing-small);
     border-radius: var(--ja-border-radius-pill);
-    background: var(--ja-color-neutral-100);
-    font-size: var(--ja-font-size-small);
-    color: var(--ja-color-neutral-600);
+    background: var(--ja-color-blue-200);
+    font-size: var(--ja-font-size-x-small);
+    color: var(--ja-color-neutral-700);
   }
 
   .clear {
@@ -227,18 +267,22 @@
     padding: var(--ja-spacing-small) var(--ja-spacing-medium);
     border: var(--ja-control-outline);
     border-color: transparent;
-    background-color: color-mix(in srgb, var(--ja-control-background-color) 90%, var(--ja-color-neutral-1000));
+    background-color: color-mix(in srgb, var(--ja-control-background-color) 95%, var(--ja-color-neutral-1000));
     color: var(--ja-color-neutral-950);
     font-size: var(--ja-font-size-small);
     font-weight: var(--ja-font-weight-bold);
 
     &:hover {
-      background-color: color-mix(in srgb, var(--ja-control-background-color) 80%, var(--ja-color-neutral-1000));
+      background-color: var(--ja-control-background-color-hover);
     }
 
     &:focus-visible {
       outline: none;
       border: var(--ja-control-outline);
     }
+  }
+
+  .space-object-card {
+    pointer-events: auto;
   }
 </style>
