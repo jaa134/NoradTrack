@@ -29,11 +29,9 @@ export const useGlobeStore = createStore(
     };
   },
   {
-    persist: [
-      {
-        storage: localStorage,
-        pick: ['pov', 'zoom'],
-      },
-    ],
+    persist: {
+      storage: localStorage,
+      pick: ['pov', 'zoom'],
+    },
   },
 );

@@ -1,7 +1,7 @@
 <script setup lang="ts">
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  import { computed, ref } from 'vue';
+  import { computed } from 'vue';
 
   import ControlGroup from '@/components/common/ControlGroup.vue';
   import SearchControl from '@/components/common/SearchControl.vue';
@@ -15,7 +15,12 @@
 
   /* Search ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const searchText = ref('YAM-');
+  const searchText = computed({
+    get: () => applicationStore.searchText,
+    set: (value) => {
+      applicationStore.searchText = value;
+    },
+  });
 
   const { results, isLoading } = useSpaceObjectSearch(searchText);
 

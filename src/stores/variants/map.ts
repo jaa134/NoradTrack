@@ -25,11 +25,9 @@ export const useMapStore = createStore(
     };
   },
   {
-    persist: [
-      {
-        storage: localStorage,
-        pick: ['center', 'zoom'],
-      },
-    ],
+    persist: {
+      storage: localStorage,
+      pick: ['center', 'zoom'],
+    },
   },
 );

@@ -11,15 +11,30 @@ const version = 0;
 
 /* Store //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-export const useApplicationStore = createStore(name, version, () => {
-  const routerLoading = ref(false);
-  const routerError = ref<string | null>(null);
+export const useApplicationStore = createStore(
+  name,
+  version,
+  () => {
+    const routerLoading = ref(false);
+    const routerError = ref<string | null>(null);
 
-  const selectedNoradIds = ref(new Set<number>());
+    const searchText = ref('YAM-');
 
-  return {
-    routerLoading,
-    routerError,
-    selectedNoradIds,
-  };
-});
+    const selectedNoradIds = ref(new Set<number>());
+    const focusedNoradId = ref<number | null>(48915);
+
+    return {
+      routerLoading,
+      routerError,
+      searchText,
+      selectedNoradIds,
+      focusedNoradId,
+    };
+  },
+  {
+    persist: {
+      storage: localStorage,
+      pick: ['searchText'],
+    },
+  },
+);
