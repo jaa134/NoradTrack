@@ -97,6 +97,7 @@
     <div class="header">
       <div class="title">{{ spaceObject.name }}</div>
       <a
+        v-tooltip.top="'Learn more'"
         class="link"
         :href="link"
         target="_blank"
