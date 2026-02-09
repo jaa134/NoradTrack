@@ -5,10 +5,12 @@ import '@/styles/index.css';
 import FloatingVue from 'floating-vue';
 import { createApp } from 'vue';
 
-import App from '@/App.vue';
-import router from '@/router/index.js';
 import pinia from '@/stores/index.js';
 import { useApplicationStore } from '@/stores/variants/application.js';
+
+import router from '@/router/index.js';
+
+import App from '@/App.vue';
 
 /* Initialize application /////////////////////////////////////////////////////////////////////////////////////////// */
 const bootstrap = () => {

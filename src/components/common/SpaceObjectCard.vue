@@ -4,8 +4,9 @@
   import { PhArrowSquareOut, PhX } from '@phosphor-icons/vue';
   import { computed, ref, watch } from 'vue';
 
-  import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
   import { SpaceObject } from '@/utilities/application.js';
+
+  import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
 
   /* Props ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 

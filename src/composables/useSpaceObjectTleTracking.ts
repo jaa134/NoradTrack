@@ -3,9 +3,10 @@
 import { type Ref, watch } from 'vue';
 import { z } from 'zod';
 
+import type { SpaceObjectTle } from '@/utilities/application.js';
+
 import { useNotify } from '@/composables/useNotify.js';
 import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
-import type { SpaceObjectTle } from '@/utilities/application.js';
 
 /* Request tracking ///////////////////////////////////////////////////////////////////////////////////////////////// */
 

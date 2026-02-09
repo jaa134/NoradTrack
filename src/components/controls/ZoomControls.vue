@@ -3,9 +3,10 @@
 
   import { PhCornersOut, PhMinus, PhPlus } from '@phosphor-icons/vue';
 
+  import { eventHub, EventType } from '@/utilities/application.js';
+
   import ButtonControl from '@/components/common/ButtonControl.vue';
   import ControlGroup from '@/components/common/ControlGroup.vue';
-  import { eventHub, EventType } from '@/utilities/application.js';
 
   /* Methods //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 

@@ -4,9 +4,10 @@ import Fuse from 'fuse.js';
 import { readonly, type Ref, shallowRef, watch } from 'vue';
 import { z } from 'zod';
 
+import type { SpaceObject } from '@/utilities/application.js';
+
 import { useNotify } from '@/composables/useNotify.js';
 import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
-import type { SpaceObject } from '@/utilities/application.js';
 
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 

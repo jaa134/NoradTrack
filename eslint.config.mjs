@@ -35,7 +35,12 @@ export default defineConfig([
             ['^@?\\w'],
 
             // Internal modules.
-            // TODO
+            ['^@/types(/|\\.|$)'],
+            ['^@/utilities(/|\\.|$)'],
+            ['^@/stores(/|\\.|$)'],
+            ['^@/router(/|\\.|$)'],
+            ['^@/composables(/|\\.|$)'],
+            ['^@/components(/|\\.|$)'],
 
             // Absolute imports and other imports such as `@/foo`.
             // Anything not matched in another group.

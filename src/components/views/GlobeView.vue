@@ -6,9 +6,6 @@
   import { Group, Mesh, MeshLambertMaterial, SphereGeometry } from 'three';
   import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-  import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
-  import { useApplicationStore } from '@/stores/variants/application.js';
-  import { useGlobeStore } from '@/stores/variants/globe.js';
   import {
     createLabelElement,
     getSpaceObjectMarker,
@@ -17,6 +14,11 @@
     markerFocusColor,
     SpaceObject,
   } from '@/utilities/application.js';
+
+  import { useApplicationStore } from '@/stores/variants/application.js';
+  import { useGlobeStore } from '@/stores/variants/globe.js';
+
+  import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
 
   /* Stores ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 

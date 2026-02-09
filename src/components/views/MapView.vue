@@ -14,9 +14,6 @@
   import View from 'ol/View.js';
   import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-  import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
-  import { useApplicationStore } from '@/stores/variants/application.js';
-  import { useMapStore } from '@/stores/variants/map.js';
   import {
     createLabelElement,
     eventHub,
@@ -27,6 +24,11 @@
     markerFocusColor,
     SpaceObject,
   } from '@/utilities/application.js';
+
+  import { useApplicationStore } from '@/stores/variants/application.js';
+  import { useMapStore } from '@/stores/variants/map.js';
+
+  import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
 
   /* Constants ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 

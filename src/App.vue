@@ -3,12 +3,13 @@
 
   import { computed } from 'vue';
 
+  import { useApplicationStore } from '@/stores/variants/application.js';
+
   import ObjectSelectionControls from '@/components/controls/ObjectSelectionControls.vue';
   import SettingsControls from '@/components/controls/SettingsControls.vue';
   import ZoomControls from '@/components/controls/ZoomControls.vue';
   import ErrorView from '@/components/views/ErrorView.vue';
   import LoadingView from '@/components/views/LoadingView.vue';
-  import { useApplicationStore } from '@/stores/variants/application.js';
 
   /* Constants ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 

@@ -4,12 +4,14 @@
   import { PhCheck } from '@phosphor-icons/vue';
   import { computed } from 'vue';
 
+  import { useApplicationStore } from '@/stores/variants/application.js';
+
+  import { useSpaceObjectSearch } from '@/composables/useSpaceObjectSearch.js';
+  import { useSpaceObjectTleTracking } from '@/composables/useSpaceObjectTleTracking.js';
+
   import ControlGroup from '@/components/common/ControlGroup.vue';
   import SearchControl from '@/components/common/SearchControl.vue';
   import SpaceObjectCard from '@/components/common/SpaceObjectCard.vue';
-  import { useSpaceObjectSearch } from '@/composables/useSpaceObjectSearch.js';
-  import { useSpaceObjectTleTracking } from '@/composables/useSpaceObjectTleTracking.js';
-  import { useApplicationStore } from '@/stores/variants/application.js';
 
   /* Stores ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
