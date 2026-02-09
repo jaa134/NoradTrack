@@ -189,7 +189,7 @@
   );
 
   const updateMarkers = (date: Date) => {
-    if (!markersLayer) {
+    if (!map || !markersLayer) {
       return;
     }
 
@@ -199,9 +199,13 @@
     }
 
     source.clear();
-    map?.getOverlays().clear();
+    map.getOverlays().clear();
 
     selectedSpaceObjects.value.forEach((spaceObject) => {
+      if (!map) {
+        return;
+      }
+
       const marker = getSpaceObjectMarker(spaceObject, getCachedSpaceObjectTle, date);
       if (!marker) {
         return;
@@ -222,7 +226,7 @@
           stopEvent: false,
         });
         overlay.setPosition(fromLonLat([adjustedLongitude, marker.latitude]));
-        map?.addOverlay(overlay);
+        map.addOverlay(overlay);
       }
     });
   };
@@ -280,7 +284,11 @@
   /* Zoom /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const zoom = (getZoomLevel: (view: View) => number | null | undefined, center: boolean = false) => {
-    const currentView = map?.getView();
+    if (!map) {
+      return;
+    }
+
+    const currentView = map.getView();
     if (!currentView) {
       return;
     }

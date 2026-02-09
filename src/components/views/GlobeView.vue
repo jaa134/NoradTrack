@@ -36,15 +36,15 @@
 
   /* Globe ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  let globeInstance: GlobeInstance | null;
+  let globe: GlobeInstance | null;
 
   const initializeGlobe = () => {
-    if (!globeElement.value || globeInstance) {
+    if (!globeElement.value || globe) {
       return;
     }
 
     // Create globe instance
-    globeInstance = new Globe(globeElement.value, {
+    globe = new Globe(globeElement.value, {
       rendererConfig: {
         alpha: true,
         antialias: true,
@@ -52,8 +52,8 @@
     });
 
     // Configure interactions and controls
-    globeInstance.enablePointerInteraction(true);
-    const controls = globeInstance.controls();
+    globe.enablePointerInteraction(true);
+    const controls = globe.controls();
     controls.enableZoom = true;
     controls.minDistance = 100;
     controls.maxDistance = 500;
@@ -62,48 +62,52 @@
     controls.autoRotate = false;
 
     // Configure scene
-    globeInstance.width(globeElement.value.clientWidth);
-    globeInstance.height(globeElement.value.clientHeight);
-    globeInstance.backgroundColor('rgba(0,0,0,0)');
+    globe.width(globeElement.value.clientWidth);
+    globe.height(globeElement.value.clientHeight);
+    globe.backgroundColor('rgba(0,0,0,0)');
 
     // Configure POV
-    globeInstance.pointOfView({
+    globe.pointOfView({
       lat: globeStore.pov.lat,
       lng: globeStore.pov.lng,
       altitude: globeStore.zoom,
     });
 
     // Configure atmosphere
-    globeInstance.showAtmosphere(true);
-    globeInstance.atmosphereAltitude(0.2);
+    globe.showAtmosphere(true);
+    globe.atmosphereAltitude(0.2);
 
     // Configure textures
-    globeInstance
+    globe
       .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
       .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png');
 
     // Configure markers
-    globeInstance.objectThreeObject((marker) => buildMarkerVisuals(marker as Marker));
-    globeInstance.objectLat((marker) => (marker as Marker).latitude);
-    globeInstance.objectLng((marker) => (marker as Marker).longitude);
-    globeInstance.objectAltitude((marker) => (marker as Marker).altitude);
-    globeInstance.objectLabel(() => '');
+    globe.objectThreeObject((marker) => buildMarkerVisuals(marker as Marker));
+    globe.objectLat((marker) => (marker as Marker).latitude);
+    globe.objectLng((marker) => (marker as Marker).longitude);
+    globe.objectAltitude((marker) => (marker as Marker).altitude);
+    globe.objectLabel(() => '');
 
     // Configure labels
-    globeInstance.htmlElementsData([]);
-    globeInstance.htmlElement((marker) => createLabelElement((marker as Marker).name));
-    globeInstance.htmlLat((marker) => (marker as Marker).latitude);
-    globeInstance.htmlLng((marker) => (marker as Marker).longitude);
-    globeInstance.htmlAltitude((marker) => (marker as Marker).altitude);
+    globe.htmlElementsData([]);
+    globe.htmlElement((marker) => createLabelElement((marker as Marker).name));
+    globe.htmlLat((marker) => (marker as Marker).latitude);
+    globe.htmlLng((marker) => (marker as Marker).longitude);
+    globe.htmlAltitude((marker) => (marker as Marker).altitude);
 
     // Configure object focus
-    globeInstance.onObjectClick((object) => {
+    globe.onObjectClick((object) => {
       focusNoradId((object as Marker).noradId);
     });
 
     // Configure POV tracking
     controls.addEventListener('change', () => {
-      const pov = globeInstance?.pointOfView();
+      if (!globe) {
+        return;
+      }
+
+      const pov = globe.pointOfView();
       if (!pov) {
         return;
       }
@@ -119,12 +123,12 @@
   };
 
   const destroyGlobe = () => {
-    if (!globeInstance) {
+    if (!globe) {
       return;
     }
 
-    globeInstance._destructor();
-    globeInstance = null;
+    globe._destructor();
+    globe = null;
   };
 
   /* Object visuals ///////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -161,7 +165,7 @@
   );
 
   const updateMarkers = (date: Date) => {
-    if (!globeInstance) {
+    if (!globe) {
       return;
     }
 
@@ -169,8 +173,8 @@
       .map((spaceObject) => getSpaceObjectMarker(spaceObject, getCachedSpaceObjectTle, date))
       .filter((marker): marker is NonNullable<typeof marker> => !!marker);
 
-    globeInstance.objectsData(objects);
-    globeInstance.htmlElementsData(objects);
+    globe.objectsData(objects);
+    globe.htmlElementsData(objects);
   };
 
   watch(
@@ -226,12 +230,12 @@
   /* Resize ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const resizeObserver = new ResizeObserver(() => {
-    if (!globeInstance || !globeElement.value) {
+    if (!globe || !globeElement.value) {
       return;
     }
 
-    globeInstance.width(globeElement.value.clientWidth);
-    globeInstance.height(globeElement.value.clientHeight);
+    globe.width(globeElement.value.clientWidth);
+    globe.height(globeElement.value.clientHeight);
   });
 
   const watchResize = () => {
