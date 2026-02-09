@@ -260,8 +260,8 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-    font-weight: var(--ja-font-weight-bold);
-    color: var(--ja-color-neutral-800);
+    font-weight: var(--ja-font-weight-semibold);
+    color: var(--ja-color-neutral-950);
   }
 
   .result-id {
