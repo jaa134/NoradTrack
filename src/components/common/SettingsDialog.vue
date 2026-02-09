@@ -50,7 +50,7 @@
           <div class="header">Settings</div>
           <div class="content">
             <label class="toggle">
-              <span>Show user position</span>
+              <span>Show my location</span>
               <input
                 v-model="applicationStore.showUserPosition"
                 type="checkbox"
