@@ -283,6 +283,8 @@
 
   /* Zoom /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
+  const zoomStep = 1;
+
   const zoom = (getZoomLevel: (view: View) => number | null | undefined, center: boolean = false) => {
     if (!map) {
       return;
@@ -319,7 +321,7 @@
       if (typeof currentZoom !== 'number') {
         return null;
       }
-      return view.getConstrainedZoom(currentZoom + 1);
+      return view.getConstrainedZoom(currentZoom + zoomStep);
     };
     zoom(getZoomLevel);
   };
@@ -330,7 +332,7 @@
       if (typeof currentZoom !== 'number') {
         return null;
       }
-      return view.getConstrainedZoom(currentZoom - 1);
+      return view.getConstrainedZoom(currentZoom - zoomStep);
     };
     zoom(getZoomLevel);
   };
@@ -376,13 +378,13 @@
   onMounted(() => {
     initializeMap();
     registerEventHandlers();
-    startAnimation();
     watchResize();
+    startAnimation();
   });
 
   onBeforeUnmount(() => {
-    unwatchResize();
     stopAnimation();
+    unwatchResize();
     unregisterEventHandlers();
     destroyMap();
   });

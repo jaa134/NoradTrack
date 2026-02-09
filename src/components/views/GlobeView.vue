@@ -8,6 +8,8 @@
 
   import {
     createLabelElement,
+    eventHub,
+    EventType,
     getSpaceObjectMarker,
     Marker,
     markerColor,
@@ -55,7 +57,7 @@
     globe.enablePointerInteraction(true);
     const controls = globe.controls();
     controls.enableZoom = true;
-    controls.minDistance = 100;
+    controls.minDistance = 125;
     controls.maxDistance = 500;
     controls.enablePan = false;
     controls.enableRotate = true;
@@ -227,6 +229,66 @@
     }
   };
 
+  /* Zoom /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const zoomStep = 0.3;
+
+  const zoom = (getNewAltitude: (currentAltitude: number) => number) => {
+    if (!globe) {
+      return {
+        lat: globeStore.pov.lat,
+        lng: globeStore.pov.lng,
+        altitude: globeStore.zoom,
+      };
+    }
+
+    const pov = globe.pointOfView();
+    if (!pov) {
+      return {
+        lat: globeStore.pov.lat,
+        lng: globeStore.pov.lng,
+        altitude: globeStore.zoom,
+      };
+    }
+
+    const newAltitude = getNewAltitude(pov.altitude);
+
+    globe.pointOfView(
+      {
+        lat: pov.lat,
+        lng: pov.lng,
+        altitude: newAltitude,
+      },
+      500,
+    );
+  };
+
+  const fitToScreen = () => {
+    zoom(() => 1.5);
+  };
+
+  const zoomIn = () => {
+    zoom((altitude) => altitude - zoomStep * altitude);
+  };
+
+  const zoomOut = () => {
+    zoom((altitude) => altitude + zoomStep * altitude);
+  };
+
+  /* Eventing /////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const registerEventHandlers = () => {
+    eventHub.on(EventType.FitToScreen, fitToScreen);
+    eventHub.on(EventType.ZoomIn, zoomIn);
+    eventHub.on(EventType.ZoomOut, zoomOut);
+  };
+
+  const unregisterEventHandlers = () => {
+    eventHub.off(EventType.FitToScreen, fitToScreen);
+    eventHub.off(EventType.ZoomIn, zoomIn);
+    eventHub.off(EventType.ZoomOut, zoomOut);
+  };
+
   /* Resize ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const resizeObserver = new ResizeObserver(() => {
@@ -254,13 +316,15 @@
 
   onMounted(() => {
     initializeGlobe();
-    startAnimation();
+    registerEventHandlers();
     watchResize();
+    startAnimation();
   });
 
   onBeforeUnmount(() => {
-    unwatchResize();
     stopAnimation();
+    unwatchResize();
+    unregisterEventHandlers();
     destroyGlobe();
   });
 </script>
