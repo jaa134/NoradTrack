@@ -46,6 +46,17 @@
     }
   };
 
+  const scrollResultIntoView = (event: FocusEvent) => {
+    const target = event.currentTarget;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      target.scrollIntoView({ block: 'nearest' });
+    });
+  };
+
   /* Selection ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const toggleNoradId = (noradId: number) => {
@@ -110,6 +121,7 @@
               v-for="result in results"
               :key="result.noradId"
               class="result"
+              @focus="scrollResultIntoView"
               @click="toggleNoradId(result.noradId)"
             >
               <PhCheck
@@ -233,6 +245,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--ja-spacing-2x-small);
+    scroll-margin: var(--ja-spacing-medium) 0 var(--ja-spacing-4x-large) 0;
     padding: var(--ja-spacing-small) var(--ja-spacing-medium) var(--ja-spacing-small) var(--ja-spacing-3x-large);
     width: 100%;
     border: var(--ja-control-outline);
