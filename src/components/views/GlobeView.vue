@@ -223,14 +223,39 @@
     }
   };
 
+  /* Resize ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const resizeObserver = new ResizeObserver(() => {
+    if (!globeInstance || !globeElement.value) {
+      return;
+    }
+
+    globeInstance.width(globeElement.value.clientWidth);
+    globeInstance.height(globeElement.value.clientHeight);
+  });
+
+  const watchResize = () => {
+    if (!globeElement.value) {
+      return;
+    }
+
+    resizeObserver.observe(globeElement.value);
+  };
+
+  const unwatchResize = () => {
+    resizeObserver.disconnect();
+  };
+
   /* Lifecycle ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   onMounted(() => {
     initializeGlobe();
     startAnimation();
+    watchResize();
   });
 
   onBeforeUnmount(() => {
+    unwatchResize();
     stopAnimation();
     destroyGlobe();
   });

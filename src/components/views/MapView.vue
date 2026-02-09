@@ -341,15 +341,39 @@
     eventHub.off(EventType.ZoomOut, zoomOut);
   };
 
+  /* Resize ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const resizeObserver = new ResizeObserver(() => {
+    if (!map || !mapElement.value) {
+      return;
+    }
+
+    map.setSize([mapElement.value.clientWidth, mapElement.value.clientHeight]);
+  });
+
+  const watchResize = () => {
+    if (!mapElement.value) {
+      return;
+    }
+
+    resizeObserver.observe(mapElement.value);
+  };
+
+  const unwatchResize = () => {
+    resizeObserver.disconnect();
+  };
+
   /* Lifecycle ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   onMounted(() => {
     initializeMap();
     registerEventHandlers();
     startAnimation();
+    watchResize();
   });
 
   onBeforeUnmount(() => {
+    unwatchResize();
     stopAnimation();
     unregisterEventHandlers();
     destroyMap();
