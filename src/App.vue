@@ -80,7 +80,7 @@
     --controls-spacer: var(--ja-spacing-medium);
 
     position: absolute;
-    z-index: 1;
+    z-index: 10;
   }
 
   .object-selection-controls {
