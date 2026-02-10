@@ -79,6 +79,7 @@
       target: mapElement.value,
       controls: [],
       interactions: getDefaultInteractions(),
+      pixelRatio: 1,
     });
 
     // Configure scene
