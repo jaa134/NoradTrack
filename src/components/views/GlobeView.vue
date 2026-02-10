@@ -104,7 +104,7 @@
     globe.htmlAltitude((marker) => (marker as Marker).altitude);
 
     // Configure countries GeoJSON
-    globe.polygonAltitude(0.01);
+    globe.polygonAltitude(0);
     globe.polygonCapColor(() => 'rgba(0, 0, 0, 0)');
     globe.polygonSideColor(() => 'rgba(0, 0, 0, 0)');
     globe.polygonStrokeColor(() => countryGeoJsonColor);
