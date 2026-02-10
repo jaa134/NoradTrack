@@ -12,7 +12,7 @@
   import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer.js';
   import Overlay from 'ol/Overlay.js';
   import { fromLonLat, get as getProjection, toLonLat } from 'ol/proj.js';
-  import { Vector as VectorSource, XYZ } from 'ol/source.js';
+  import { Vector as VectorSource } from 'ol/source.js';
   import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style.js';
   import View from 'ol/View.js';
   import { onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue';
@@ -30,6 +30,7 @@
     spaceObjectMarkerFocusColor,
     userPositionMarkerColor,
   } from '@/utilities/application.js';
+  import { mapSkinSourceMap } from '@/utilities/map.js';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
   import { useMapStore } from '@/stores/variants/map.js';
@@ -59,6 +60,8 @@
   /* Map //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   let map: OlMap | null = null;
+
+  const tileLayer = new TileLayer({ source: mapSkinSourceMap[mapStore.skin] });
 
   const countryGeoJsonVectorSource = new VectorSource<Feature<MultiPolygon>>();
   const countryGeoJsonLayer = new VectorLayer({ source: countryGeoJsonVectorSource });
@@ -102,16 +105,8 @@
       }),
     );
 
-    // Configure tiles
-    const tileLayer = new TileLayer({
-      source: new XYZ({
-        url: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/2013-12-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg',
-        wrapX: true,
-      }),
-    });
-    map.addLayer(tileLayer);
-
     // Configure layers
+    map.addLayer(tileLayer);
     map.addLayer(countryGeoJsonLayer);
     map.addLayer(markersLayer);
 
@@ -347,6 +342,15 @@
   watch([countriesGeoJson, () => applicationStore.showCountryGeoJson], () => {
     updateCountriesGeoJson();
   });
+
+  /* Skins ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  watch(
+    () => mapStore.skin,
+    (newSkin) => {
+      tileLayer.setSource(mapSkinSourceMap[newSkin]);
+    },
+  );
 
   /* Animation ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 

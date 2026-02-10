@@ -4,9 +4,11 @@
   import { PhCaretDown, PhX } from '@phosphor-icons/vue';
 
   import { globeSkinOptions } from '@/utilities/globe.js';
+  import { mapSkinOptions } from '@/utilities/map.js';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
   import { useGlobeStore } from '@/stores/variants/globe.js';
+  import { useMapStore } from '@/stores/variants/map.js';
 
   /* Models ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -17,6 +19,8 @@
   /* Stores ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const applicationStore = useApplicationStore();
+
+  const mapStore = useMapStore();
 
   const globeStore = useGlobeStore();
 
@@ -66,6 +70,22 @@
               <input
                 v-model="applicationStore.showCountryGeoJson"
                 type="checkbox"
+              />
+            </div>
+            <div class="toggle">
+              <span class="label">Map skin</span>
+              <select v-model="mapStore.skin">
+                <option
+                  v-for="option in mapSkinOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+              <PhCaretDown
+                class="select-icon"
+                weight="bold"
               />
             </div>
             <div class="toggle">
@@ -173,6 +193,7 @@
     }
 
     select {
+      width: 160px;
       padding: var(--ja-spacing-3x-small) var(--ja-spacing-2x-large) var(--ja-spacing-3x-small) var(--ja-spacing-small);
       border: 1px solid var(--ja-color-neutral-300);
       border-radius: var(--ja-control-border-radius-round);

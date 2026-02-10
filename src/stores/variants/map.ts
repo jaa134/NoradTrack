@@ -2,6 +2,7 @@
 
 import { ref } from 'vue';
 
+import { MapSkin } from '@/utilities/map.js';
 import { createStore } from '@/utilities/store.js';
 
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -19,15 +20,18 @@ export const useMapStore = createStore(
 
     const zoom = ref(3);
 
+    const skin = ref(MapSkin.BlueMarble);
+
     return {
       center,
       zoom,
+      skin,
     };
   },
   {
     persist: {
       storage: localStorage,
-      pick: ['center', 'zoom'],
+      pick: ['center', 'zoom', 'skin'],
     },
   },
 );
