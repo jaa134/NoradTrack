@@ -95,6 +95,8 @@
   }
 
   .icon {
+    flex: 0 0 auto;
+
     &.loading {
       color: var(--ja-color-primary-500);
       animation: spin var(--ja-transition-x-slow) linear infinite;
@@ -102,7 +104,8 @@
   }
 
   .input {
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
     height: 100%;
     border: none;
     background: transparent;
@@ -117,6 +120,7 @@
   }
 
   .clear {
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;

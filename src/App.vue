@@ -108,6 +108,12 @@
     height: 100%;
   }
 
+  @media (max-width: 768px) {
+    .controls {
+      --controls-edge-offset: var(--ja-spacing-medium);
+    }
+  }
+
   @keyframes loading-sweep {
     0% {
       left: -25%;

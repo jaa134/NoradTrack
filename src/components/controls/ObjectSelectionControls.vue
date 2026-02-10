@@ -175,7 +175,7 @@
 
 <style scoped>
   .object-selection-controls {
-    --control-width: 350px;
+    --control-width: clamp(240px, 75vw, 350px);
     --list-border-radius: var(--ja-border-radius-x-large);
 
     display: grid;

@@ -74,35 +74,39 @@
             </div>
             <div class="toggle">
               <span class="label">Map skin</span>
-              <select v-model="mapStore.skin">
-                <option
-                  v-for="option in mapSkinOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </option>
-              </select>
-              <PhCaretDown
-                class="select-icon"
-                weight="bold"
-              />
+              <div class="select-container">
+                <select v-model="mapStore.skin">
+                  <option
+                    v-for="option in mapSkinOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+                <PhCaretDown
+                  class="select-icon"
+                  weight="bold"
+                />
+              </div>
             </div>
             <div class="toggle">
               <span class="label">Globe skin</span>
-              <select v-model="globeStore.skin">
-                <option
-                  v-for="option in globeSkinOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </option>
-              </select>
-              <PhCaretDown
-                class="select-icon"
-                weight="bold"
-              />
+              <div class="select-container">
+                <select v-model="globeStore.skin">
+                  <option
+                    v-for="option in globeSkinOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+                <PhCaretDown
+                  class="select-icon"
+                  weight="bold"
+                />
+              </div>
             </div>
           </div>
         </dialog>
@@ -132,7 +136,8 @@
   .dialog {
     position: relative;
     padding: var(--ja-spacing-medium) var(--ja-spacing-large) var(--ja-spacing-large) var(--ja-spacing-large);
-    width: 400px;
+    width: min(400px, 90vw);
+    max-height: 90vh;
     border: none;
     border-radius: var(--ja-border-radius-large);
     background-color: var(--ja-control-background-color);
@@ -177,23 +182,26 @@
     justify-content: space-between;
     gap: var(--ja-spacing-medium);
     font-size: var(--ja-font-size-small);
+  }
 
-    .label {
-      color: var(--ja-color-neutral-800);
-    }
+  .label {
+    color: var(--ja-color-neutral-800);
+  }
 
-    input {
-      width: 16px;
-      height: 16px;
-      cursor: pointer;
+  input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
 
-      &:hover {
-        background-color: unset;
-      }
-    }
+  .select-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 160px;
 
     select {
-      width: 160px;
+      width: 100%;
       padding: var(--ja-spacing-3x-small) var(--ja-spacing-2x-large) var(--ja-spacing-3x-small) var(--ja-spacing-small);
       border: 1px solid var(--ja-color-neutral-300);
       border-radius: var(--ja-control-border-radius-round);
@@ -202,11 +210,23 @@
       font-size: var(--ja-font-size-small);
       appearance: none;
     }
+
+    .select-icon {
+      position: absolute;
+      right: var(--ja-spacing-small);
+      pointer-events: none;
+    }
   }
 
-  .select-icon {
-    position: absolute;
-    right: var(--ja-spacing-small);
-    pointer-events: none;
+  @media (max-width: 600px) {
+    .toggle {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--ja-spacing-2x-small);
+    }
+
+    .select-container {
+      width: 100%;
+    }
   }
 </style>
