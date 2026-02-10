@@ -2,10 +2,25 @@
 
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
+  <!-- Home page -->
   <url>
-    <loc>https://noradTrack.jacob-alspaw.com/</loc>
+    <loc>https://jacob-alspaw.com/</loc>
     <priority>1.0</priority>
     <changefreq>monthly</changefreq>
   </url>
-  
+
+  <!-- Map page -->
+  <url>
+    <loc>https://noradtrack.jacob-alspaw.com/map</loc>
+    <priority>1.0</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Globe page -->
+  <url>
+    <loc>https://noradtrack.jacob-alspaw.com/globe</loc>
+    <priority>1.0</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
 </urlset>
