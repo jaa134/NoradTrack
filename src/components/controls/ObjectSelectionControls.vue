@@ -159,7 +159,7 @@
             class="clear"
             @click="clearSelectedNoradIds"
           >
-            Clear selected ({{ applicationStore.selectedNoradIds.size }})
+            Unselect all ({{ applicationStore.selectedNoradIds.size }})
           </button>
         </div>
       </div>
@@ -331,7 +331,7 @@
     position: sticky;
     bottom: 0;
     width: 100%;
-    padding: var(--ja-spacing-small) var(--ja-spacing-medium);
+    padding: var(--ja-spacing-x-small) var(--ja-spacing-medium);
     border: var(--ja-control-outline);
     border-color: transparent;
     background-color: color-mix(in srgb, var(--ja-control-background-color) 95%, var(--ja-color-neutral-1000));
