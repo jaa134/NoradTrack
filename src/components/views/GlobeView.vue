@@ -86,8 +86,8 @@
 
     // Configure textures
     globe
-      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
-      .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png');
+      .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+      .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png');
 
     // Configure markers
     globe.objectThreeObject((marker) => buildMarkerVisuals(marker as Marker));

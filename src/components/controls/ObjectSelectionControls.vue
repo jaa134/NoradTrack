@@ -34,7 +34,12 @@
 
   const showResults = ref(false);
 
-  const handleFocusIn = () => {
+  const handleFocusIn = (event: FocusEvent) => {
+    const target = event.target;
+    if (target instanceof HTMLElement && target.closest('.clear')) {
+      return;
+    }
+
     showResults.value = true;
   };
 
@@ -103,14 +108,8 @@
       </ControlGroup>
 
       <div class="list-container">
-        <Transition
-          name="fade"
-          mode="out-in"
-        >
-          <div
-            v-show="showResults"
-            class="loading-list"
-          >
+        <div class="loading-list">
+          <template v-if="showResults">
             <div
               v-if="searchText && !results.length"
               class="empty-message"
@@ -119,6 +118,7 @@
             </div>
             <button
               v-for="result in results"
+              v-else
               :key="result.noradId"
               class="result"
               @focus="scrollResultIntoView"
@@ -153,15 +153,15 @@
                 </span>
               </div>
             </button>
-            <button
-              v-if="applicationStore.selectedNoradIds.size"
-              class="clear"
-              @click="clearSelectedNoradIds"
-            >
-              Clear selected ({{ applicationStore.selectedNoradIds.size }})
-            </button>
-          </div>
-        </Transition>
+          </template>
+          <button
+            v-if="applicationStore.selectedNoradIds.size"
+            class="clear"
+            @click="clearSelectedNoradIds"
+          >
+            Clear selected ({{ applicationStore.selectedNoradIds.size }})
+          </button>
+        </div>
       </div>
     </div>
 
@@ -205,7 +205,6 @@
   .list-container {
     flex: 1 1 auto;
     min-height: 0;
-    margin-bottom: var(--ja-spacing-2x-large);
   }
 
   .loading-list {
@@ -352,6 +351,7 @@
 
   .space-object-card {
     flex: 0 0 auto;
+    margin-top: var(--ja-spacing-2x-large);
     pointer-events: auto;
   }
 </style>
