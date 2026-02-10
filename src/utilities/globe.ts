@@ -1,0 +1,29 @@
+/* Skins //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+export const globeBumpImageUrl = '/images/globe/topology.png';
+
+export enum GlobeSkin {
+  BlueMarble = 'BlueMarble',
+  HighRes = 'HighRes',
+  Night = 'Night',
+  Grid = 'Grid',
+}
+
+export const globeSkinLabelMap: Record<GlobeSkin, string> = {
+  [GlobeSkin.BlueMarble]: 'Blue Marble',
+  [GlobeSkin.HighRes]: 'High-Res',
+  [GlobeSkin.Night]: 'Night',
+  [GlobeSkin.Grid]: 'Grid',
+};
+
+export const globeSkinSourceMap: Record<GlobeSkin, string> = {
+  [GlobeSkin.BlueMarble]: '/images/globe/blue-marble.jpg',
+  [GlobeSkin.HighRes]: '/images/globe/high-res.jpg',
+  [GlobeSkin.Night]: '/images/globe/night.jpg',
+  [GlobeSkin.Grid]: '/images/globe/grid.jpg',
+};
+
+export const globeSkinOptions = Object.values(GlobeSkin).map((skin) => ({
+  label: globeSkinLabelMap[skin],
+  value: skin,
+}));

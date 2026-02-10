@@ -20,6 +20,7 @@
     spaceObjectMarkerFocusColor,
     userPositionMarkerColor,
   } from '@/utilities/application.js';
+  import { globeBumpImageUrl, globeSkinSourceMap } from '@/utilities/globe.js';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
   import { useGlobeStore } from '@/stores/variants/globe.js';
@@ -85,9 +86,8 @@
     globe.atmosphereAltitude(0.2);
 
     // Configure textures
-    globe
-      .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
-      .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png');
+    globe.globeImageUrl(globeSkinSourceMap[globeStore.skin]);
+    globe.bumpImageUrl(globeBumpImageUrl);
 
     // Configure markers
     globe.objectThreeObject((marker) => buildMarkerVisuals(marker as Marker));
@@ -277,6 +277,19 @@
   watch([countriesGeoJson, () => applicationStore.showCountryGeoJson], () => {
     updateCountriesGeoJson();
   });
+
+  /* Skins ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  watch(
+    () => globeStore.skin,
+    (newSkin) => {
+      if (!globe) {
+        return;
+      }
+
+      globe.globeImageUrl(globeSkinSourceMap[newSkin]);
+    },
+  );
 
   /* Animation ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 

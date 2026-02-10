@@ -2,6 +2,7 @@
 
 import { ref } from 'vue';
 
+import { GlobeSkin } from '@/utilities/globe.js';
 import { createStore } from '@/utilities/store.js';
 
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -23,15 +24,18 @@ export const useGlobeStore = createStore(
 
     const zoom = ref(1.5);
 
+    const skin = ref(GlobeSkin.BlueMarble);
+
     return {
       pov,
       zoom,
+      skin,
     };
   },
   {
     persist: {
       storage: localStorage,
-      pick: ['pov', 'zoom'],
+      pick: ['pov', 'zoom', 'skin'],
     },
   },
 );
