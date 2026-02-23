@@ -1,7 +1,7 @@
 <script setup lang="ts">
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  import { computed, ref } from 'vue';
+  import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
 
@@ -28,11 +28,33 @@
 
   const { results, isLoading } = useSpaceObjectSearch(searchText);
 
+  const displayedResults = computed(() => results.value.slice(0, 100));
+
   /* Results visibility //////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const searchContainer = ref<HTMLElement | null>(null);
 
   const showResults = ref(false);
 
-  const handleFocusIn = (event: FocusEvent) => {
+  let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  const queueHide = () => {
+    cancelHide();
+    hideTimeout = setTimeout(() => {
+      showResults.value = false;
+    }, 150);
+  };
+
+  const cancelHide = () => {
+    if (hideTimeout !== null) {
+      clearTimeout(hideTimeout);
+      hideTimeout = null;
+    }
+  };
+
+  const handleSearchClick = (event: MouseEvent) => {
+    cancelHide();
+
     const target = event.target;
     if (target instanceof HTMLElement && target.closest('.clear')) {
       return;
@@ -41,13 +63,33 @@
     showResults.value = true;
   };
 
-  const handleFocusOut = (event: FocusEvent) => {
-    const currentTarget = event.currentTarget as HTMLElement | null;
-    const nextTarget = event.relatedTarget as Node | null;
-    if (!currentTarget || !nextTarget || !currentTarget.contains(nextTarget)) {
-      showResults.value = false;
+  const handleSearchKeydownEnter = (event: KeyboardEvent) => {
+    cancelHide();
+
+    const target = event.target;
+    if (target instanceof HTMLElement && target.closest('.clear')) {
+      return;
+    }
+
+    showResults.value = !showResults.value;
+  };
+
+  const handlePointerDownOutside = (event: PointerEvent) => {
+    if (showResults.value && searchContainer.value && !searchContainer.value.contains(event.target as Node)) {
+      queueHide();
     }
   };
+
+  onMounted(() => {
+    document.addEventListener('pointerdown', handlePointerDownOutside);
+  });
+
+  onBeforeUnmount(() => {
+    cancelHide();
+    document.removeEventListener('pointerdown', handlePointerDownOutside);
+  });
+
+  /* Scrolling ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const scrollResultIntoView = (event: FocusEvent) => {
     const target = event.currentTarget;
@@ -63,6 +105,7 @@
   /* Selection ////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const toggleNoradId = (noradId: number) => {
+    cancelHide();
     if (applicationStore.selectedNoradIds.has(noradId)) {
       applicationStore.selectedNoradIds.delete(noradId);
     } else {
@@ -73,6 +116,7 @@
   const clearSelectedNoradIds = (event: Event) => {
     event.preventDefault();
     event.stopPropagation();
+    cancelHide();
     applicationStore.selectedNoradIds.clear();
   };
 
@@ -92,9 +136,8 @@
 <template>
   <div class="object-selection-controls">
     <div
+      ref="searchContainer"
       class="search-container"
-      @focusin="handleFocusIn"
-      @focusout="handleFocusOut"
     >
       <ControlGroup
         border-style="pill"
@@ -105,6 +148,8 @@
           :class="{ 'has-selection': applicationStore.selectedNoradIds.size > 0 }"
           :loading="isLoading"
           placeholder="Search objects"
+          @click="handleSearchClick"
+          @keydown.enter="handleSearchKeydownEnter"
         >
           <template #suffix>
             <button
@@ -130,7 +175,7 @@
             </div>
             <template v-else>
               <SearchResult
-                v-for="spaceObject in results"
+                v-for="spaceObject in displayedResults"
                 :key="spaceObject.noradId"
                 :space-object="spaceObject"
                 @focus="scrollResultIntoView"
