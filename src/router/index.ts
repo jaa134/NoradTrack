@@ -16,7 +16,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     name: RouteName.Home,
-    redirect: { name: RouteName.Map },
+    redirect: { name: RouteName.Globe },
   },
   {
     path: '/map',
