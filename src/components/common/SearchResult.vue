@@ -110,6 +110,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--ja-spacing-small);
+    width: 100%;
     margin-bottom: var(--ja-spacing-3x-small);
   }
 
