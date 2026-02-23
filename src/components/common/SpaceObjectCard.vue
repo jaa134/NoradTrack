@@ -1,12 +1,22 @@
 <script setup lang="ts">
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  import { PhArrowSquareOut, PhX } from '@phosphor-icons/vue';
+  import { PhArrowSquareOut, PhQuestion, PhX } from '@phosphor-icons/vue';
   import { computed, ref, watch } from 'vue';
 
-  import { SpaceObject, spaceObjectMarkerFocusColor } from '@/utilities/application.js';
+  import {
+    flyoverProjectionDurationDays,
+    getFlyovers,
+    SpaceObject,
+    spaceObjectMarkerFocusColor,
+    SpaceObjectTle,
+  } from '@/utilities/application.js';
+
+  import { useApplicationStore } from '@/stores/variants/application.js';
 
   import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
+
+  import FlyoversDialog from '@/components/common/FlyoversDialog.vue';
 
   /* Props ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -22,21 +32,51 @@
     close: [];
   }>();
 
+  /* Stores ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const applicationStore = useApplicationStore();
+
   /* Lookup ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const spaceObject = ref<SpaceObject | null>(null);
+  const spaceObjectTle = ref<SpaceObjectTle | null>(null);
 
-  const { lookupCachedSpaceObject } = useSpaceObjectCache();
+  const { lookupCachedSpaceObject, getCachedSpaceObjectTle } = useSpaceObjectCache();
 
   watch(
     () => props.noradId,
     (newNoradId) => {
       spaceObject.value = lookupCachedSpaceObject(newNoradId);
+      spaceObjectTle.value = getCachedSpaceObjectTle(newNoradId);
     },
     {
       immediate: true,
     },
   );
+
+  /* Flyover //////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const showFlyoversDialog = ref(false);
+
+  const toggleFlyoversDialog = () => {
+    showFlyoversDialog.value = !showFlyoversDialog.value;
+  };
+
+  const flyovers = computed(() => {
+    if (!spaceObjectTle.value) {
+      return [];
+    }
+
+    if (!applicationStore.userPosition) {
+      return [];
+    }
+
+    return getFlyovers(spaceObjectTle.value, applicationStore.userPosition);
+  });
+
+  const flyoversTooltipContent = computed(() => {
+    return `Projecting ${flyovers.value.length} flyovers in the next ${flyoverProjectionDurationDays} days`;
+  });
 
   /* Link /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -68,19 +108,6 @@
 
     const formatted = parsedValue.toFixed(digits);
     return unit ? `${formatted} ${unit}` : formatted;
-  };
-
-  const formatEpoch = (value: unknown) => {
-    if (isBlank(value)) {
-      return defaultText;
-    }
-
-    const parsed = value instanceof Date ? value : new Date(String(value));
-    if (Number.isNaN(parsed.getTime())) {
-      return formatText(value);
-    }
-
-    return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   };
 </script>
 
@@ -130,10 +157,6 @@
             <span class="value">{{ formatText(spaceObject.info.classification) }}</span>
           </div>
           <div class="item">
-            <span class="label">Epoch</span>
-            <span class="value">{{ formatEpoch(spaceObject.info.epoch) }}</span>
-          </div>
-          <div class="item">
             <span class="label">Mean motion</span>
             <span class="value">{{ formatNumber(spaceObject.info.meanMotion, 2, 'rev/day') }}</span>
           </div>
@@ -149,9 +172,42 @@
             <span class="label">Rev at epoch</span>
             <span class="value">{{ formatNumber(spaceObject.info.revAtEpoch, 0) }}</span>
           </div>
+          <div class="item">
+            <span class="label">Flyovers</span>
+            <span
+              v-if="applicationStore.userPosition"
+              class="value"
+            >
+              <button
+                v-tooltip.top="flyoversTooltipContent"
+                @click="toggleFlyoversDialog"
+              >
+                Projecting {{ flyovers.length }}
+              </button>
+            </span>
+            <span
+              v-else
+              class="value"
+            >
+              <span>Unknown</span>
+              <PhQuestion
+                v-tooltip="{
+                  content: 'Enable location services to see flyovers',
+                  placement: 'top',
+                  triggers: ['hover', 'click'],
+                }"
+              />
+            </span>
+          </div>
         </div>
       </div>
     </Transition>
+
+    <FlyoversDialog
+      v-model="showFlyoversDialog"
+      :space-object="spaceObject"
+      :flyovers="flyovers"
+    />
   </div>
 </template>
 
@@ -233,9 +289,24 @@
   }
 
   .value {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--ja-spacing-2x-small);
     font-size: var(--ja-font-size-small);
-    color: var(--ja-color-neutral-800);
     line-height: var(--ja-line-height-dense);
+    color: var(--ja-color-neutral-800);
+
+    button {
+      margin: 0;
+      padding: 0;
+      outline-offset: 2px;
+      border: none;
+      background-color: transparent;
+      font-weight: var(--ja-font-weight-semibold);
+      color: var(--ja-color-primary-500);
+      cursor: pointer;
+    }
   }
 
   @media (max-width: 460px) {

@@ -83,7 +83,7 @@ export default defineConfig([
       },
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'off', // handled by eslint-plugin-unused-imports
     },
   },
 

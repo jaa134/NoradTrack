@@ -30,18 +30,13 @@
     spaceObjectMarkerFocusColor,
     userPositionMarkerColor,
   } from '@/utilities/application.js';
-  import { mapSkinSourceMap } from '@/utilities/map.js';
+  import { horizontalLimitFactor, mapSkinSourceMap } from '@/utilities/map.js';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
   import { useMapStore } from '@/stores/variants/map.js';
 
   import { useCountriesGeoJson } from '@/composables/useCountriesGeoJson.js';
   import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
-
-  /* Constants ////////////////////////////////////////////////////////////////////////////////////////////////////// */
-
-  // Main screen space + 5 additional spaces to the left and right
-  const horizontalLimitFactor = 11;
 
   /* Stores ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
