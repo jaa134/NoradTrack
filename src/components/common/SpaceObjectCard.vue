@@ -157,7 +157,10 @@
 
 <style scoped>
   .space-object-card {
+    --space-object-card-columns-count: 4;
+
     position: relative;
+    width: 600px;
     padding: var(--ja-spacing-medium) var(--ja-spacing-large) var(--ja-spacing-large) var(--ja-spacing-large);
     border: 3px solid v-bind('spaceObjectMarkerFocusColor');
     border-radius: var(--ja-border-radius-x-large);
@@ -186,17 +189,21 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: var(--ja-spacing-small);
-    padding-bottom: var(--ja-spacing-small);
+    gap: var(--ja-spacing-x-small);
+    padding: 0 var(--ja-spacing-3x-large) var(--ja-spacing-x-small) 0;
   }
 
   .title {
     font-size: var(--ja-font-size-large);
     font-weight: var(--ja-font-weight-bold);
     color: var(--ja-color-neutral-800);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 
   .link {
+    flex: 0 0 auto;
     margin-bottom: var(--ja-spacing-3x-small);
     padding: var(--ja-spacing-3x-small);
     font-size: var(--ja-font-size-large);
@@ -209,8 +216,8 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(3, 150px) auto;
-    gap: var(--ja-spacing-medium) 0;
+    grid-template-columns: repeat(var(--space-object-card-columns-count), auto);
+    gap: var(--ja-spacing-small) 0;
   }
 
   .item {
@@ -228,5 +235,50 @@
   .value {
     font-size: var(--ja-font-size-small);
     color: var(--ja-color-neutral-800);
+    line-height: var(--ja-line-height-dense);
+  }
+
+  @media (max-width: 500px) {
+    .space-object-card {
+      --space-object-card-columns-count: 2;
+
+      width: 275px;
+      padding: var(--ja-spacing-x-small) var(--ja-spacing-small) var(--ja-spacing-medium) var(--ja-spacing-small);
+    }
+
+    .close {
+      top: var(--ja-spacing-x-small);
+      right: var(--ja-spacing-x-small);
+    }
+
+    .header {
+      padding-bottom: var(--ja-spacing-2x-small);
+    }
+
+    .grid {
+      gap: var(--ja-spacing-x-small) 0;
+    }
+  }
+
+  @media (min-width: 501px) and (max-width: 725px) {
+    .space-object-card {
+      --space-object-card-columns-count: 3;
+
+      width: 400px;
+      padding: var(--ja-spacing-small) var(--ja-spacing-medium) var(--ja-spacing-medium) var(--ja-spacing-medium);
+    }
+
+    .close {
+      top: var(--ja-spacing-x-small);
+      right: var(--ja-spacing-x-small);
+    }
+
+    .header {
+      padding-bottom: var(--ja-spacing-x-small);
+    }
+
+    .grid {
+      gap: var(--ja-spacing-x-small) 0;
+    }
   }
 </style>

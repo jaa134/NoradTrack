@@ -41,7 +41,7 @@
 
 <template>
   <div
-    class="search-input"
+    class="search-control"
     @click="focusSearchInput"
   >
     <PhCircleNotch
@@ -71,14 +71,15 @@
     >
       <PhXCircle weight="bold" />
     </button>
+    <slot name="suffix"></slot>
   </div>
 </template>
 
 <style scoped>
-  .search-input {
+  .search-control {
     display: flex;
     align-items: center;
-    gap: var(--ja-spacing-small);
+    gap: var(--ja-spacing-x-small);
     padding: 0 var(--ja-spacing-medium);
     width: 100%;
     height: 40px;
