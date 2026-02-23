@@ -292,4 +292,10 @@
     margin-top: var(--ja-spacing-x-large);
     pointer-events: auto;
   }
+
+  @media (max-height: 500px) {
+    .space-object-card {
+      margin-top: var(--ja-spacing-small);
+    }
+  }
 </style>

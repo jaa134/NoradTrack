@@ -160,8 +160,8 @@
     --space-object-card-columns-count: 4;
 
     position: relative;
-    width: 600px;
-    padding: var(--ja-spacing-medium) var(--ja-spacing-large) var(--ja-spacing-large) var(--ja-spacing-large);
+    width: 480px;
+    padding: var(--ja-spacing-small) var(--ja-spacing-large) var(--ja-spacing-large) var(--ja-spacing-large);
     border: 3px solid v-bind('spaceObjectMarkerFocusColor');
     border-radius: var(--ja-border-radius-x-large);
     background-color: var(--ja-control-background-color);
@@ -172,7 +172,7 @@
     position: absolute;
     top: var(--ja-spacing-small);
     right: var(--ja-spacing-small);
-    padding: var(--ja-spacing-x-small);
+    padding: var(--ja-spacing-2x-small);
     border: none;
     border-radius: var(--ja-border-radius-circle);
     background-color: transparent;
@@ -238,21 +238,38 @@
     line-height: var(--ja-line-height-dense);
   }
 
-  @media (max-width: 500px) {
+  @media (max-width: 460px) {
     .space-object-card {
       --space-object-card-columns-count: 2;
 
-      width: 275px;
-      padding: var(--ja-spacing-x-small) var(--ja-spacing-small) var(--ja-spacing-medium) var(--ja-spacing-small);
+      width: 260px;
+      padding-left: var(--ja-spacing-small);
+      padding-right: var(--ja-spacing-small);
+    }
+  }
+
+  @media (min-width: 461px) and (max-width: 580px) {
+    .space-object-card {
+      --space-object-card-columns-count: 3;
+
+      width: 360px;
+      padding-left: var(--ja-spacing-small);
+      padding-right: var(--ja-spacing-small);
+    }
+  }
+
+  @media (max-height: 400px) {
+    .space-object-card {
+      padding-top: var(--ja-spacing-2x-small);
+      padding-bottom: var(--ja-spacing-x-small);
     }
 
     .close {
       top: var(--ja-spacing-x-small);
-      right: var(--ja-spacing-x-small);
     }
 
     .header {
-      padding-bottom: var(--ja-spacing-2x-small);
+      padding-bottom: 0;
     }
 
     .grid {
@@ -260,21 +277,18 @@
     }
   }
 
-  @media (min-width: 501px) and (max-width: 725px) {
+  @media (min-height: 401px) and (max-height: 600px) {
     .space-object-card {
-      --space-object-card-columns-count: 3;
-
-      width: 400px;
-      padding: var(--ja-spacing-small) var(--ja-spacing-medium) var(--ja-spacing-medium) var(--ja-spacing-medium);
+      padding-top: var(--ja-spacing-x-small);
+      padding-bottom: var(--ja-spacing-small);
     }
 
     .close {
-      top: var(--ja-spacing-x-small);
-      right: var(--ja-spacing-x-small);
+      top: var(--ja-spacing-small);
     }
 
     .header {
-      padding-bottom: var(--ja-spacing-x-small);
+      padding-bottom: 0;
     }
 
     .grid {
