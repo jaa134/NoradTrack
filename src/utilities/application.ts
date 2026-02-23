@@ -94,7 +94,7 @@ export const getSpaceObjectMarker = (
 ): SpaceObjectMarker | null => {
   const spaceObjectTle = getTle(spaceObject.noradId);
   if (!spaceObjectTle) {
-    console.error(`Failed to get TLE lines for ${getSpaceObjectDisplayText(spaceObject)}.`);
+    console.error(`Failed to get TLE for ${getSpaceObjectDisplayText(spaceObject)}.`);
     return null;
   }
 
