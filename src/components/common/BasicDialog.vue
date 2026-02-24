@@ -99,8 +99,8 @@
     flex-direction: column;
     gap: var(--ja-spacing-2x-small);
     padding: var(--ja-spacing-medium) var(--ja-spacing-large) var(--ja-spacing-large) var(--ja-spacing-large);
-    width: min(400px, 90vw);
-    max-height: 90vh;
+    width: min(400px, 90dvw);
+    max-height: 90dvh;
     border: none;
     border-radius: var(--ja-border-radius-large);
     background-color: var(--ja-control-background-color);
