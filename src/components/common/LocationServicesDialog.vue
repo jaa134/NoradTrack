@@ -25,7 +25,7 @@
   >
     <div class="content">
       <p class="description">
-        NoradTrack uses your location to provide additional features. This data is only used to:
+        NoradTrack uses your location to provide additional features. This data is used only to:
       </p>
 
       <ul class="features">
