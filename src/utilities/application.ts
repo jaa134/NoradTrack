@@ -11,10 +11,11 @@ import {
   eciToGeodetic,
   GeodeticLocation,
   gstime,
+  json2satrec,
   Kilometer,
+  OMMJsonObject,
   propagate,
   radiansToDegrees,
-  twoline2satrec,
 } from 'satellite.js';
 
 /* Types //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -22,13 +23,10 @@ import {
 export interface SpaceObject {
   name: string;
   noradId: number;
-  info: Record<string, unknown>;
-}
-
-export interface SpaceObjectTle {
-  noradId: number;
-  line1: string;
-  line2: string;
+  objectId: string;
+  classification: string;
+  meanMotion: number;
+  omm: OMMJsonObject;
 }
 
 export interface MarkerBase {
@@ -101,18 +99,8 @@ export const getUserPositionMarker = (userPosition: UserPosition): UserPositionM
   };
 };
 
-export const getSpaceObjectMarker = (
-  spaceObject: SpaceObject,
-  getTle: (noradId: number) => SpaceObjectTle | null,
-  date: Date,
-): SpaceObjectMarker | null => {
-  const spaceObjectTle = getTle(spaceObject.noradId);
-  if (!spaceObjectTle) {
-    console.error(`Failed to get TLE for ${getSpaceObjectDisplayText(spaceObject)}.`);
-    return null;
-  }
-
-  const satrec = twoline2satrec(spaceObjectTle.line1, spaceObjectTle.line2);
+export const getSpaceObjectMarker = (spaceObject: SpaceObject, date: Date): SpaceObjectMarker | null => {
+  const satrec = json2satrec(spaceObject.omm);
   const positionAndVelocity = propagate(satrec, date);
   if (!positionAndVelocity?.position) {
     console.error(`Failed to propagate position for ${getSpaceObjectDisplayText(spaceObject)}.`);
@@ -203,8 +191,8 @@ const flyoverProjectionDuration = flyoverProjectionDurationDays * 24 * 60 * 60 *
 const flyoverProjectionInterval = 60 * 1000; // 1 minutes
 const flyoverMinElevation = 30; // 30 degrees
 
-export const getFlyovers = (spaceObjectTle: SpaceObjectTle, userPosition: UserPosition): Flyover[] => {
-  const satrec = twoline2satrec(spaceObjectTle.line1, spaceObjectTle.line2);
+export const getFlyovers = (spaceObject: SpaceObject, userPosition: UserPosition): Flyover[] => {
+  const satrec = json2satrec(spaceObject.omm);
 
   const observerPosition: GeodeticLocation = {
     longitude: degreesToRadians(userPosition.longitude),

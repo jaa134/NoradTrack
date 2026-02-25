@@ -1,14 +1,12 @@
 /* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-import type { SpaceObject, SpaceObjectTle } from '@/utilities/application.js';
+import type { SpaceObject } from '@/utilities/application.js';
 
 /* Cache //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
 const seachResultCache = new Map<string, SpaceObject[]>();
 
 const lookupCache = new Map<number, SpaceObject>();
-
-const tleCache = new Map<number, SpaceObjectTle>();
 
 /* Utilities //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -28,20 +26,10 @@ const lookupCachedSpaceObject = (noradId: number) => {
   return lookupCache.get(noradId) ?? null;
 };
 
-const getCachedSpaceObjectTle = (noradId: number) => {
-  return tleCache.get(noradId) ?? null;
-};
-
-const setCachedSpaceObjectTle = (noradId: number, tle: SpaceObjectTle) => {
-  tleCache.set(noradId, tle);
-};
-
 /* Compose ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
 export const useSpaceObjectCache = () => ({
   getCachedSearchResults,
   setCachedSearchResults,
   lookupCachedSpaceObject,
-  getCachedSpaceObjectTle,
-  setCachedSpaceObjectTle,
 });

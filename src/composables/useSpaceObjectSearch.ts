@@ -33,49 +33,38 @@ const clearInflightRequest = (cacheKey: string) => {
 
 /* Fetch //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-const CelestrakEntrySchema = z.looseObject({
+const OrbitMeanElementsMessageV3Schema = z.object({
   OBJECT_NAME: z.string(),
-  NORAD_CAT_ID: z.coerce.number(),
-  OBJECT_ID: z.string().nullable().optional(),
-  EPOCH: z.string().nullable().optional(),
-  MEAN_MOTION: z.coerce.number().nullable().optional(),
-  INCLINATION: z.coerce.number().nullable().optional(),
-  ECCENTRICITY: z.coerce.number().nullable().optional(),
-  ARG_OF_PERICENTER: z.coerce.number().nullable().optional(),
-  RA_OF_ASC_NODE: z.coerce.number().nullable().optional(),
-  MEAN_ANOMALY: z.coerce.number().nullable().optional(),
-  CLASSIFICATION_TYPE: z.string().nullable().optional(),
-  REV_AT_EPOCH: z.coerce.number().nullable().optional(),
-  BSTAR: z.coerce.number().nullable().optional(),
+  OBJECT_ID: z.string(),
+  EPOCH: z.string(),
+  MEAN_MOTION: z.number(),
+  ECCENTRICITY: z.number(),
+  INCLINATION: z.number(),
+  RA_OF_ASC_NODE: z.number(),
+  ARG_OF_PERICENTER: z.number(),
+  MEAN_ANOMALY: z.number(),
+  EPHEMERIS_TYPE: z.literal(0),
+  CLASSIFICATION_TYPE: z.enum(['U', 'C']),
+  NORAD_CAT_ID: z.number(),
+  ELEMENT_SET_NO: z.number(),
+  REV_AT_EPOCH: z.number(),
+  BSTAR: z.number(),
+  MEAN_MOTION_DOT: z.number(),
+  MEAN_MOTION_DDOT: z.number(),
 });
 
-const CelestrakResponseSchema = z
-  .union([z.array(CelestrakEntrySchema), CelestrakEntrySchema])
-  .transform((value) => (Array.isArray(value) ? value : [value]));
+type OrbitMeanElementsMessageV3 = z.infer<typeof OrbitMeanElementsMessageV3Schema>;
 
-type CelestrakEntry = z.infer<typeof CelestrakEntrySchema>;
+const CelestrakResponseSchema = z.array(OrbitMeanElementsMessageV3Schema);
 
-const mapCelestrakResult = (entry: CelestrakEntry): SpaceObject => {
-  const name = entry.OBJECT_NAME;
-  const noradId = entry.NORAD_CAT_ID;
-
+const mapCelestrakResult = (omm: OrbitMeanElementsMessageV3): SpaceObject => {
   return {
-    name,
-    noradId,
-    info: {
-      objectId: entry.OBJECT_ID ?? null,
-      epoch: entry.EPOCH ?? null,
-      meanMotion: entry.MEAN_MOTION ?? null,
-      inclination: entry.INCLINATION ?? null,
-      eccentricity: entry.ECCENTRICITY ?? null,
-      argumentOfPerigee: entry.ARG_OF_PERICENTER ?? null,
-      rightAscension: entry.RA_OF_ASC_NODE ?? null,
-      meanAnomaly: entry.MEAN_ANOMALY ?? null,
-      classification: entry.CLASSIFICATION_TYPE ?? null,
-      revAtEpoch: entry.REV_AT_EPOCH ?? null,
-      bStar: entry.BSTAR ?? null,
-      source: 'celestrak',
-    },
+    name: omm.OBJECT_NAME,
+    noradId: omm.NORAD_CAT_ID,
+    objectId: omm.OBJECT_ID,
+    classification: omm.CLASSIFICATION_TYPE,
+    meanMotion: omm.MEAN_MOTION,
+    omm,
   };
 };
 

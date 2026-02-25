@@ -36,7 +36,7 @@
 
   /* Cache ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const { lookupCachedSpaceObject, getCachedSpaceObjectTle } = useSpaceObjectCache();
+  const { lookupCachedSpaceObject } = useSpaceObjectCache();
 
   /* Elements /////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -210,7 +210,7 @@
         continue;
       }
 
-      const marker = getSpaceObjectMarker(spaceObject, getCachedSpaceObjectTle, date);
+      const marker = getSpaceObjectMarker(spaceObject, date);
       if (!marker) {
         continue;
       }

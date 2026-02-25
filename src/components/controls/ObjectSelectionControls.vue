@@ -6,7 +6,6 @@
   import { useApplicationStore } from '@/stores/variants/application.js';
 
   import { useSpaceObjectSearch } from '@/composables/useSpaceObjectSearch.js';
-  import { useSpaceObjectTleTracking } from '@/composables/useSpaceObjectTleTracking.js';
 
   import ControlGroup from '@/components/common/ControlGroup.vue';
   import SearchControl from '@/components/common/SearchControl.vue';
@@ -125,12 +124,6 @@
   const unfocusNoradId = () => {
     applicationStore.focusedNoradId = null;
   };
-
-  /* TLE Tracking /////////////////////////////////////////////////////////////////////////////////////////////////// */
-
-  const noradIdsToTrackTle = computed(() => Array.from(applicationStore.selectedNoradIds));
-
-  useSpaceObjectTleTracking(noradIdsToTrackTle);
 </script>
 
 <template>

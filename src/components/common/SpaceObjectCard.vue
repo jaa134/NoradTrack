@@ -7,10 +7,10 @@
     degreesLong,
     eciToGeodetic,
     gstime,
+    json2satrec,
     Kilometer,
     KilometerPerSecond,
     propagate,
-    twoline2satrec,
   } from 'satellite.js';
   import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 
@@ -19,7 +19,6 @@
     getFlyovers,
     SpaceObject,
     spaceObjectMarkerFocusColor,
-    SpaceObjectTle,
   } from '@/utilities/application.js';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
@@ -48,23 +47,21 @@
 
   /* Lookup ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const spaceObject = ref<SpaceObject | null>(null);
-  const spaceObjectTle = ref<SpaceObjectTle | null>(null);
+  const { lookupCachedSpaceObject } = useSpaceObjectCache();
 
-  const { lookupCachedSpaceObject, getCachedSpaceObjectTle } = useSpaceObjectCache();
+  const spaceObject = ref<SpaceObject | null>(null);
 
   watch(
     () => props.noradId,
     (newNoradId) => {
       spaceObject.value = lookupCachedSpaceObject(newNoradId);
-      spaceObjectTle.value = getCachedSpaceObjectTle(newNoradId);
     },
     {
       immediate: true,
     },
   );
 
-  /* TLE derivation ///////////////////////////////////////////////////////////////////////////////////////////////// */
+  /* OMM derivation ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const propagationDate = ref(new Date());
   let propagationInterval: number | null = null;
@@ -82,14 +79,14 @@
   });
 
   const satrec = computed(() => {
-    if (!spaceObjectTle.value) {
+    if (!spaceObject.value) {
       return null;
     }
 
-    return twoline2satrec(spaceObjectTle.value.line1, spaceObjectTle.value.line2);
+    return json2satrec(spaceObject.value.omm);
   });
 
-  const tleDerivedData = reactive<{
+  const ommDerivedData = reactive<{
     longitude: number | null;
     latitude: number | null;
     altitude: Kilometer | null;
@@ -108,21 +105,21 @@
         return;
       }
 
-      const propagatedTle = propagate(satrec.value, propagationDate.value);
-      if (!propagatedTle) {
-        tleDerivedData.longitude = null;
-        tleDerivedData.latitude = null;
-        tleDerivedData.altitude = null;
-        tleDerivedData.velocity = null;
+      const propagatedOmm = propagate(satrec.value, propagationDate.value);
+      if (!propagatedOmm) {
+        ommDerivedData.longitude = null;
+        ommDerivedData.latitude = null;
+        ommDerivedData.altitude = null;
+        ommDerivedData.velocity = null;
         return;
       }
 
-      const geodeticPosition = eciToGeodetic(propagatedTle.position, gstime(propagationDate.value));
-      tleDerivedData.longitude = degreesLong(geodeticPosition.longitude);
-      tleDerivedData.latitude = degreesLat(geodeticPosition.latitude);
-      tleDerivedData.altitude = geodeticPosition.height;
-      tleDerivedData.velocity = Math.sqrt(
-        propagatedTle.velocity.x ** 2 + propagatedTle.velocity.y ** 2 + propagatedTle.velocity.z ** 2,
+      const geodeticPosition = eciToGeodetic(propagatedOmm.position, gstime(propagationDate.value));
+      ommDerivedData.longitude = degreesLong(geodeticPosition.longitude);
+      ommDerivedData.latitude = degreesLat(geodeticPosition.latitude);
+      ommDerivedData.altitude = geodeticPosition.height;
+      ommDerivedData.velocity = Math.sqrt(
+        propagatedOmm.velocity.x ** 2 + propagatedOmm.velocity.y ** 2 + propagatedOmm.velocity.z ** 2,
       );
     },
     {
@@ -139,15 +136,11 @@
   };
 
   const flyovers = computed(() => {
-    if (!spaceObjectTle.value) {
+    if (!spaceObject.value || !applicationStore.userPosition) {
       return [];
     }
 
-    if (!applicationStore.userPosition) {
-      return [];
-    }
-
-    return getFlyovers(spaceObjectTle.value, applicationStore.userPosition);
+    return getFlyovers(spaceObject.value, applicationStore.userPosition);
   });
 
   const flyoversTooltipContent = computed(() => {
@@ -244,29 +237,29 @@
           </div>
           <div class="item">
             <span class="label">Object ID</span>
-            <span class="value">{{ formatText(spaceObject.info.objectId) }}</span>
+            <span class="value">{{ formatText(spaceObject.objectId) }}</span>
           </div>
           <div class="item">
             <span class="label">Class</span>
-            <span class="value">{{ formatText(spaceObject.info.classification) }}</span>
+            <span class="value">{{ formatText(spaceObject.classification) }}</span>
           </div>
           <div class="item">
             <span class="label">Mean motion</span>
-            <span class="value">{{ formatNumber(spaceObject.info.meanMotion, 2, 'rev/day') }}</span>
+            <span class="value">{{ formatNumber(spaceObject.meanMotion, 2, 'rev/day') }}</span>
           </div>
           <div class="item">
             <span class="label">Position</span>
             <span class="value">
-              {{ formatLatitude(tleDerivedData.latitude) }}, {{ formatLongitude(tleDerivedData.longitude) }}
+              {{ formatLatitude(ommDerivedData.latitude) }}, {{ formatLongitude(ommDerivedData.longitude) }}
             </span>
           </div>
           <div class="item">
             <span class="label">Altitude</span>
-            <span class="value">{{ formatNumber(tleDerivedData.altitude, 0, 'km') }}</span>
+            <span class="value">{{ formatNumber(ommDerivedData.altitude, 0, 'km') }}</span>
           </div>
           <div class="item">
             <span class="label">Velocity</span>
-            <span class="value">{{ formatNumber(tleDerivedData.velocity, 2, 'km/s') }}</span>
+            <span class="value">{{ formatNumber(ommDerivedData.velocity, 2, 'km/s') }}</span>
           </div>
           <div class="item">
             <span class="label">Flyovers</span>

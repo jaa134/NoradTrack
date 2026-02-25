@@ -37,18 +37,8 @@
       <span class="id">NORAD {{ spaceObject.noradId }}</span>
     </div>
     <div class="meta">
-      <span
-        v-if="spaceObject.info.classification"
-        class="tag"
-      >
-        Class {{ spaceObject.info.classification }}
-      </span>
-      <span
-        v-if="spaceObject.info.objectId"
-        class="tag"
-      >
-        ID {{ spaceObject.info.objectId }}
-      </span>
+      <span class="tag">Class {{ spaceObject.classification }}</span>
+      <span class="tag">ID {{ spaceObject.objectId }}</span>
     </div>
   </button>
 </template>

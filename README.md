@@ -7,9 +7,13 @@ View objects in orbit on an interactive map or globe.
 ## Features
 
 - Search by NORAD ID or name and select multiple objects.
-- Live position updates using TLE data.
+- Live position updates using OMM data.
 - Map and 3D globe views with click-to-focus details.
+- Configurable skins for map and globe views
 - Quick zoom controls and fit-to-screen support.
+- State managment and persistence with Pinia
+- Flyover predictions of space objects
+- Configurable geojson overlay for countries
 
 ---
 
@@ -24,7 +28,7 @@ The website is built to support multiple targets:
 
 ## Data sources
 
-- Object metadata and TLEs from Celestrak.
+- Object metadata and OMMs from Celestrak.
 - Map tiles from NASA GIBS (Blue Marble shaded relief).
 
 ---
@@ -33,7 +37,7 @@ The website is built to support multiple targets:
 
 - Vue 3 + Vite + TypeScript
 - OpenLayers (map) and globe.gl/three.js (globe)
-- satellite.js for TLE propagation
+- satellite.js for OMM propagation
 - Pinia for state
 
 ---
