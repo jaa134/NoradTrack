@@ -31,7 +31,9 @@ const fetchCountriesGeoJson = async () => {
       return data;
     } catch (error) {
       console.error(error);
-      throw new Error(`Failed to fetch countries geojson: ${error}`);
+      throw new Error(`Failed to fetch countries geojson: ${JSON.stringify(error, null, 2)}`, {
+        cause: error,
+      });
     } finally {
       inflightRequest = null;
     }
@@ -66,7 +68,7 @@ export const useCountriesGeoJson = () => {
     }
   };
 
-  load();
+  void load();
 
   return {
     data: readonly(data),

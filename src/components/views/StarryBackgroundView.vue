@@ -17,7 +17,7 @@
     duration: number;
   }
 
-  const stars = ref<Array<Star>>([]);
+  const stars = ref<Star[]>([]);
 
   const resetStars = () => {
     stars.value = [];

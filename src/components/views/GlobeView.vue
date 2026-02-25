@@ -14,8 +14,8 @@
     EventType,
     getSpaceObjectMarker,
     getUserPositionMarker,
-    Marker,
-    SpaceObjectMarker,
+    type Marker,
+    type SpaceObjectMarker,
     spaceObjectMarkerColor,
     spaceObjectMarkerFocusColor,
     userPositionMarkerColor,
@@ -123,9 +123,6 @@
       }
 
       const pov = globe.pointOfView();
-      if (!pov) {
-        return;
-      }
 
       globeStore.pov = {
         lat: pov.lat,
@@ -198,7 +195,7 @@
       return;
     }
 
-    let markers: Marker[] = [];
+    const markers: Marker[] = [];
 
     if (applicationStore.showUserPosition && applicationStore.userPosition) {
       markers.push(getUserPositionMarker(applicationStore.userPosition));
@@ -332,13 +329,6 @@
     }
 
     const pov = globe.pointOfView();
-    if (!pov) {
-      return {
-        lat: globeStore.pov.lat,
-        lng: globeStore.pov.lng,
-        altitude: globeStore.zoom,
-      };
-    }
 
     const newAltitude = getNewAltitude(pov.altitude);
 

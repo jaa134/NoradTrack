@@ -6,7 +6,7 @@
   import { easeOut } from 'ol/easing.js';
   import Feature from 'ol/Feature.js';
   import { GeoJSON as GeoJsonFormatter } from 'ol/format.js';
-  import { MultiPolygon } from 'ol/geom.js';
+  import { type MultiPolygon } from 'ol/geom.js';
   import Point from 'ol/geom/Point.js';
   import { defaults as getDefaultInteractions } from 'ol/interaction.js';
   import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer.js';
@@ -24,8 +24,8 @@
     EventType,
     getSpaceObjectMarker,
     getUserPositionMarker,
-    Marker,
-    SpaceObjectMarker,
+    type Marker,
+    type SpaceObjectMarker,
     spaceObjectMarkerColor,
     spaceObjectMarkerFocusColor,
     userPositionMarkerColor,
@@ -84,8 +84,8 @@
     const projection = getProjection('EPSG:3857') ?? undefined;
     let extent = projection?.getExtent();
     if (extent) {
-      const horizontalLimit = extent[2]! * horizontalLimitFactor;
-      extent = [-horizontalLimit, extent[1]!, horizontalLimit, extent[3]!];
+      const horizontalLimit = extent[2]! * horizontalLimitFactor; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      extent = [-horizontalLimit, extent[1]!, horizontalLimit, extent[3]!]; // eslint-disable-line @typescript-eslint/no-non-null-assertion
     }
 
     // Configure POV
@@ -113,7 +113,7 @@
       }
 
       const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => feature);
-      if (!feature || !feature.get('interactive') === true) {
+      if (!feature?.get('interactive')) {
         return;
       }
 
@@ -127,7 +127,7 @@
       }
 
       const feature = map.forEachFeatureAtPixel(event.pixel, (feature) => feature);
-      if (!feature || !feature.get('interactive') === true) {
+      if (!feature?.get('interactive')) {
         map.getTargetElement().style.cursor = 'grab';
         return;
       }
@@ -379,15 +379,12 @@
 
   const zoomStep = 1;
 
-  const zoom = (getZoomLevel: (view: View) => number | null | undefined, center: boolean = false) => {
+  const zoom = (getZoomLevel: (view: View) => number | null | undefined, center = false) => {
     if (!map) {
       return;
     }
 
     const currentView = map.getView();
-    if (!currentView) {
-      return;
-    }
 
     const zoomLevel = getZoomLevel(currentView);
     if (typeof zoomLevel !== 'number') {

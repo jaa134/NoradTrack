@@ -85,11 +85,13 @@ const fetchCelestrakSpaceObjects = async (query: string): Promise<SpaceObject[]>
   }
 
   try {
-    const data = JSON.parse(rawBody);
+    const data = JSON.parse(rawBody) as unknown;
     const parsedData = CelestrakResponseSchema.parse(data);
     return parsedData.map((entry) => mapCelestrakResult(entry));
   } catch (error) {
-    throw new Error(`Failed to parse API response for "${query}": ${error}`);
+    throw new Error(`Failed to parse API response for "${query}": ${JSON.stringify(error, null, 2)}`, {
+      cause: error,
+    });
   }
 };
 
@@ -154,7 +156,7 @@ export const useSpaceObjectSearch = (searchText: Ref<string>) => {
 
   watch(
     () => searchText.value,
-    async (newSearchText) => {
+    (newSearchText) => {
       if (requestDebounceTimer) {
         clearTimeout(requestDebounceTimer);
       }

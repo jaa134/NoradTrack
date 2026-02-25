@@ -2,18 +2,18 @@
 
 import mitt from 'mitt';
 import {
-  Degrees,
+  type Degrees,
   degreesLat,
   degreesLong,
   degreesToRadians,
   ecfToLookAngles,
   eciToEcf,
   eciToGeodetic,
-  GeodeticLocation,
+  type GeodeticLocation,
   gstime,
   json2satrec,
-  Kilometer,
-  OMMJsonObject,
+  type Kilometer,
+  type OMMJsonObject,
   propagate,
   radiansToDegrees,
 } from 'satellite.js';
@@ -128,9 +128,9 @@ export enum EventType {
 }
 
 interface EventMap {
-  [EventType.FitToScreen]: void;
-  [EventType.ZoomIn]: void;
-  [EventType.ZoomOut]: void;
+  [EventType.FitToScreen]: undefined;
+  [EventType.ZoomIn]: undefined;
+  [EventType.ZoomOut]: undefined;
 }
 
 export const eventHub = mitt<{ [T in keyof EventMap]: EventMap[T] }>();
@@ -221,6 +221,7 @@ export const getFlyovers = (spaceObject: SpaceObject, userPosition: UserPosition
 
   let index = 0;
   while (index < positionTimeSeries.length) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const start = positionTimeSeries[index]!;
 
     // Start tracking the flyover
@@ -241,6 +242,7 @@ export const getFlyovers = (spaceObject: SpaceObject, userPosition: UserPosition
     // point that does not belong to the same flyover. A flyover stops when
     // the next data point occurs more than the projection interval in the future.
     while (index < positionTimeSeries.length) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const current = positionTimeSeries[index]!;
 
       const previous = positionTimeSeries[index - 1];

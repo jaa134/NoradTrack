@@ -2,7 +2,7 @@
 
 import { ref, watch } from 'vue';
 
-import { getUserPosition, UserPosition } from '@/utilities/application.js';
+import { getUserPosition, type UserPosition } from '@/utilities/application.js';
 import { createStore } from '@/utilities/store.js';
 
 import { useNotify } from '@/composables/useNotify.js';

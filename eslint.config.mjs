@@ -1,91 +1,577 @@
-import eslint from '@eslint/js';
-import { defineConfig, globalIgnores } from 'eslint/config';
-import eslintPrettierConfig from 'eslint-config-prettier';
+/* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+import prettierConfig from 'eslint-config-prettier/flat';
 import importPlugin from 'eslint-plugin-import';
-import simpleImportSortPlugin from 'eslint-plugin-simple-import-sort';
-import unusedImportsPlugin from 'eslint-plugin-unused-imports';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import unusedImports from 'eslint-plugin-unused-imports';
 import vuePlugin from 'eslint-plugin-vue';
 import globals from 'globals';
 import typescriptEslint from 'typescript-eslint';
+import vueParser from 'vue-eslint-parser';
 
-export default defineConfig([
-  globalIgnores(['node_modules', 'dist']),
+/* Rules //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  eslint.configs.recommended,
-
-  {
-    plugins: {
-      import: importPlugin,
-      'simple-import-sort': simpleImportSortPlugin,
-      'unused-imports': unusedImportsPlugin,
-    },
-    rules: {
-      'import/first': 'error',
-      'import/newline-after-import': 'error',
-      'import/no-duplicates': 'error',
-      'simple-import-sort/imports': [
-        'error',
-        {
-          groups: [
-            // Side-effect imports.
-            ['^\\u0000'],
-
-            // Packages.
-            // Things that start with a letter (or digit or underscore), or `@` followed by a letter.
-            ['^@?\\w'],
-
-            // Internal modules.
-            ['^@/types(/|\\.|$)'],
-            ['^@/utilities(/|\\.|$)'],
-            ['^@/router(/|\\.|$)'],
-            ['^@/stores(/|\\.|$)'],
-            ['^@/composables(/|\\.|$)'],
-            ['^@/components(/|\\.|$)'],
-
-            // Absolute imports and other imports such as `@/foo`.
-            // Anything not matched in another group.
-            ['^'],
-
-            // Relative (parent) imports.
-            ['^\\.\\.'],
-
-            // Relative (sibling) imports.
-            ['^\\.'],
-          ],
-        },
-      ],
-      'unused-imports/no-unused-imports': 'error',
-      'unused-imports/no-unused-vars': [
-        'warn',
-        {
-          vars: 'all',
-          varsIgnorePattern: '^_',
-          args: 'after-used',
-          argsIgnorePattern: '^_',
-        },
+const importRules = {
+  // Internal rules
+  'import/first': 'error',
+  'import/newline-after-import': 'error',
+  'import/no-duplicates': 'error',
+  'simple-import-sort/imports': [
+    'error',
+    {
+      groups: [
+        // Side effect imports
+        ['^\\u0000'],
+        // Node.js builtins
+        ['^node:'],
+        // External packages
+        ['^@?\\w'],
+        // Internal folders
+        ['^@/types(/|\\.|$)'],
+        ['^@/utilities(/|\\.|$)'],
+        ['^@/router(/|\\.|$)'],
+        ['^@/stores(/|\\.|$)'],
+        ['^@/composables(/|\\.|$)'],
+        ['^@/components(/|\\.|$)'],
+        // Unmentioned internal folders
+        ['^@/'],
+        // Parent imports
+        ['^\\.\\.(?!/?$)', '^\\.\\./?$'],
+        // Same-folder imports
+        ['^\\./(?=.*/)(?!/?$)', '^\\.(?!/?$)', '^\\./?$'],
       ],
     },
-  },
+  ],
+  'simple-import-sort/exports': 'error',
+  'unused-imports/no-unused-imports': 'error',
+  'unused-imports/no-unused-vars': [
+    'warn',
+    {
+      vars: 'all',
+      varsIgnorePattern: '^_',
+      args: 'after-used',
+      argsIgnorePattern: '^_',
+    },
+  ],
+};
 
+const javascriptRules = {
+  // Copied from ESLint's "eslint-recommended" rules
+  'constructor-super': 'error',
+  'for-direction': 'error',
+  'getter-return': 'error',
+  'no-async-promise-executor': 'error',
+  'no-case-declarations': 'error',
+  'no-class-assign': 'error',
+  'no-compare-neg-zero': 'error',
+  'no-cond-assign': 'error',
+  'no-const-assign': 'error',
+  'no-constant-binary-expression': 'error',
+  'no-constant-condition': 'error',
+  'no-control-regex': 'error',
+  'no-debugger': 'error',
+  'no-delete-var': 'error',
+  'no-dupe-args': 'error',
+  'no-dupe-class-members': 'error',
+  'no-dupe-else-if': 'error',
+  'no-dupe-keys': 'error',
+  'no-duplicate-case': 'error',
+  'no-empty': 'error',
+  'no-empty-character-class': 'error',
+  'no-empty-pattern': 'error',
+  'no-empty-static-block': 'error',
+  'no-ex-assign': 'error',
+  'no-extra-boolean-cast': 'error',
+  'no-fallthrough': 'error',
+  'no-func-assign': 'error',
+  'no-global-assign': 'error',
+  'no-import-assign': 'error',
+  'no-invalid-regexp': 'error',
+  'no-irregular-whitespace': 'error',
+  'no-loss-of-precision': 'error',
+  'no-misleading-character-class': 'error',
+  'no-new-native-nonconstructor': 'error',
+  'no-nonoctal-decimal-escape': 'error',
+  'no-obj-calls': 'error',
+  'no-octal': 'error',
+  'no-prototype-builtins': 'error',
+  'no-redeclare': 'error',
+  'no-regex-spaces': 'error',
+  'no-self-assign': 'error',
+  'no-setter-return': 'error',
+  'no-shadow-restricted-names': 'error',
+  'no-sparse-arrays': 'error',
+  'no-this-before-super': 'error',
+  'no-unassigned-vars': 'error',
+  'no-undef': 'error',
+  'no-unexpected-multiline': 'error',
+  'no-unreachable': 'error',
+  'no-unsafe-finally': 'error',
+  'no-unsafe-negation': 'error',
+  'no-unsafe-optional-chaining': 'error',
+  'no-unused-labels': 'error',
+  'no-unused-private-class-members': 'error',
+  'no-unused-vars': 'error',
+  'no-useless-assignment': 'error',
+  'no-useless-backreference': 'error',
+  'no-useless-catch': 'error',
+  'no-useless-escape': 'error',
+  'no-with': 'error',
+  'preserve-caught-error': 'error',
+  'require-yield': 'error',
+  'use-isnan': 'error',
+  'valid-typeof': 'error',
+
+  // Internal rules
+  'dot-notation': 'error',
+  eqeqeq: 'error',
+  'id-denylist': ['error', 'any', 'number', 'string', 'boolean', 'undefined'],
+  'id-match': 'error',
+  'no-duplicate-imports': 'off',
+  'no-eval': 'error',
+  'no-lonely-if': 'error',
+  'no-multi-assign': 'error',
+  'no-redeclare': 'off',
+  'no-self-compare': 'error',
+  'no-unneeded-ternary': 'error',
+  'no-useless-computed-key': 'error',
+  'no-useless-rename': 'error',
+  'no-useless-return': 'error',
+  'no-var': 'error',
+  'prefer-const': 'error',
+  quotes: ['error', 'single', { avoidEscape: true }],
+  yoda: 'error',
+};
+
+const typescriptRules = {
+  // Copied from Typescript ESLint's "strict-type-checked" rules
+  '@typescript-eslint/await-thenable': 'error',
+  '@typescript-eslint/ban-ts-comment': ['error', { minimumDescriptionLength: 10 }],
+  'no-array-constructor': 'off',
+  '@typescript-eslint/no-array-constructor': 'error',
+  '@typescript-eslint/no-array-delete': 'error',
+  '@typescript-eslint/no-base-to-string': 'error',
+  '@typescript-eslint/no-confusing-void-expression': 'error',
+  '@typescript-eslint/no-deprecated': 'error',
+  '@typescript-eslint/no-duplicate-enum-values': 'error',
+  '@typescript-eslint/no-duplicate-type-constituents': 'error',
+  '@typescript-eslint/no-dynamic-delete': 'error',
+  '@typescript-eslint/no-empty-object-type': 'error',
+  '@typescript-eslint/no-explicit-any': 'error',
+  '@typescript-eslint/no-extra-non-null-assertion': 'error',
+  '@typescript-eslint/no-extraneous-class': 'error',
+  '@typescript-eslint/no-floating-promises': 'error',
+  '@typescript-eslint/no-for-in-array': 'error',
+  'no-implied-eval': 'off',
+  '@typescript-eslint/no-implied-eval': 'error',
+  '@typescript-eslint/no-invalid-void-type': 'error',
+  '@typescript-eslint/no-meaningless-void-operator': 'error',
+  '@typescript-eslint/no-misused-new': 'error',
+  '@typescript-eslint/no-misused-promises': 'error',
+  '@typescript-eslint/no-misused-spread': 'error',
+  '@typescript-eslint/no-mixed-enums': 'error',
+  '@typescript-eslint/no-namespace': 'error',
+  '@typescript-eslint/no-non-null-asserted-nullish-coalescing': 'error',
+  '@typescript-eslint/no-non-null-asserted-optional-chain': 'error',
+  '@typescript-eslint/no-non-null-assertion': 'error',
+  '@typescript-eslint/no-redundant-type-constituents': 'error',
+  '@typescript-eslint/no-require-imports': 'error',
+  '@typescript-eslint/no-this-alias': 'error',
+  '@typescript-eslint/no-unnecessary-boolean-literal-compare': 'error',
+  '@typescript-eslint/no-unnecessary-condition': 'error',
+  '@typescript-eslint/no-unnecessary-template-expression': 'error',
+  '@typescript-eslint/no-unnecessary-type-arguments': 'error',
+  '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+  '@typescript-eslint/no-unnecessary-type-constraint': 'error',
+  '@typescript-eslint/no-unnecessary-type-conversion': 'error',
+  '@typescript-eslint/no-unnecessary-type-parameters': 'error',
+  '@typescript-eslint/no-unsafe-argument': 'error',
+  '@typescript-eslint/no-unsafe-assignment': 'error',
+  '@typescript-eslint/no-unsafe-call': 'error',
+  '@typescript-eslint/no-unsafe-declaration-merging': 'error',
+  '@typescript-eslint/no-unsafe-enum-comparison': 'error',
+  '@typescript-eslint/no-unsafe-function-type': 'error',
+  '@typescript-eslint/no-unsafe-member-access': 'error',
+  '@typescript-eslint/no-unsafe-return': 'error',
+  '@typescript-eslint/no-unsafe-unary-minus': 'error',
+  'no-unused-expressions': 'off',
+  '@typescript-eslint/no-unused-expressions': 'error',
+  'no-unused-vars': 'off',
+  '@typescript-eslint/no-unused-vars': 'error',
+  'no-useless-constructor': 'off',
+  '@typescript-eslint/no-useless-constructor': 'error',
+  '@typescript-eslint/no-useless-default-assignment': 'error',
+  '@typescript-eslint/no-wrapper-object-types': 'error',
+  'no-throw-literal': 'off',
+  '@typescript-eslint/only-throw-error': 'error',
+  '@typescript-eslint/prefer-as-const': 'error',
+  '@typescript-eslint/prefer-literal-enum-member': 'error',
+  '@typescript-eslint/prefer-namespace-keyword': 'error',
+  'prefer-promise-reject-errors': 'off',
+  '@typescript-eslint/prefer-promise-reject-errors': 'error',
+  '@typescript-eslint/prefer-reduce-type-parameter': 'error',
+  '@typescript-eslint/prefer-return-this-type': 'error',
+  '@typescript-eslint/related-getter-setter-pairs': 'error',
+  'require-await': 'off',
+  '@typescript-eslint/require-await': 'error',
+  '@typescript-eslint/restrict-plus-operands': [
+    'error',
+    {
+      allowAny: false,
+      allowBoolean: false,
+      allowNullish: false,
+      allowNumberAndString: false,
+      allowRegExp: false,
+    },
+  ],
+  '@typescript-eslint/restrict-template-expressions': [
+    'error',
+    {
+      allowAny: false,
+      allowBoolean: false,
+      allowNever: false,
+      allowNullish: false,
+      allowNumber: false,
+      allowRegExp: false,
+    },
+  ],
+  'no-return-await': 'off',
+  '@typescript-eslint/return-await': ['error', 'error-handling-correctness-only'],
+  '@typescript-eslint/triple-slash-reference': 'error',
+  '@typescript-eslint/unbound-method': 'error',
+  '@typescript-eslint/unified-signatures': 'error',
+  '@typescript-eslint/use-unknown-in-catch-callback-variable': 'error',
+
+  // Copied from Typescript ESLint's "stylistic-type-checked" rules
+  '@typescript-eslint/adjacent-overload-signatures': 'error',
+  '@typescript-eslint/array-type': 'error',
+  '@typescript-eslint/ban-tslint-comment': 'error',
+  '@typescript-eslint/class-literal-property-style': 'error',
+  '@typescript-eslint/consistent-generic-constructors': 'error',
+  '@typescript-eslint/consistent-indexed-object-style': 'error',
+  '@typescript-eslint/consistent-type-assertions': 'error',
+  '@typescript-eslint/consistent-type-definitions': 'error',
+  'dot-notation': 'off',
+  '@typescript-eslint/dot-notation': 'error',
+  '@typescript-eslint/no-confusing-non-null-assertion': 'error',
+  'no-empty-function': 'off',
+  '@typescript-eslint/no-empty-function': 'error',
+  '@typescript-eslint/no-inferrable-types': 'error',
+  '@typescript-eslint/non-nullable-type-assertion-style': 'error',
+  '@typescript-eslint/prefer-find': 'error',
+  '@typescript-eslint/prefer-for-of': 'error',
+  '@typescript-eslint/prefer-function-type': 'error',
+  '@typescript-eslint/prefer-includes': 'error',
+  '@typescript-eslint/prefer-nullish-coalescing': 'error',
+  '@typescript-eslint/prefer-optional-chain': 'error',
+  '@typescript-eslint/prefer-regexp-exec': 'error',
+  '@typescript-eslint/prefer-string-starts-ends-with': 'error',
+
+  // Internal rules
+  'no-undef': 'off',
+  '@typescript-eslint/no-unnecessary-condition': ['error', { allowConstantLoopConditions: true }],
+  '@typescript-eslint/prefer-nullish-coalescing': [
+    'error',
+    {
+      ignoreTernaryTests: false,
+      ignorePrimitives: { string: true },
+    },
+  ],
+  '@typescript-eslint/prefer-regexp-exec': 'off',
+  '@typescript-eslint/restrict-template-expressions': [
+    'error',
+    {
+      allowAny: false,
+      allowBoolean: true,
+      allowNever: false,
+      allowNullish: false,
+      allowNumber: true,
+      allowRegExp: false,
+    },
+  ],
+  '@typescript-eslint/switch-exhaustiveness-check': ['error', { considerDefaultExhaustiveForUnions: true }],
+  '@typescript-eslint/unified-signatures': 'off',
+};
+
+const vueRules = {
+  // Copied from Vue ESLint's "base" rules
+  'vue/comment-directive': 'error',
+  'vue/jsx-uses-vars': 'error',
+
+  // Copied from Vue ESLint's "vue3-essential" rules
+  'vue/multi-word-component-names': 'error',
+  'vue/no-arrow-functions-in-watch': 'error',
+  'vue/no-async-in-computed-properties': 'error',
+  'vue/no-child-content': 'error',
+  'vue/no-computed-properties-in-data': 'error',
+  'vue/no-deprecated-data-object-declaration': 'error',
+  'vue/no-deprecated-delete-set': 'error',
+  'vue/no-deprecated-destroyed-lifecycle': 'error',
+  'vue/no-deprecated-dollar-listeners-api': 'error',
+  'vue/no-deprecated-dollar-scopedslots-api': 'error',
+  'vue/no-deprecated-events-api': 'error',
+  'vue/no-deprecated-filter': 'error',
+  'vue/no-deprecated-functional-template': 'error',
+  'vue/no-deprecated-html-element-is': 'error',
+  'vue/no-deprecated-inline-template': 'error',
+  'vue/no-deprecated-model-definition': 'error',
+  'vue/no-deprecated-props-default-this': 'error',
+  'vue/no-deprecated-router-link-tag-prop': 'error',
+  'vue/no-deprecated-scope-attribute': 'error',
+  'vue/no-deprecated-slot-attribute': 'error',
+  'vue/no-deprecated-slot-scope-attribute': 'error',
+  'vue/no-deprecated-v-bind-sync': 'error',
+  'vue/no-deprecated-v-is': 'error',
+  'vue/no-deprecated-v-on-native-modifier': 'error',
+  'vue/no-deprecated-v-on-number-modifiers': 'error',
+  'vue/no-deprecated-vue-config-keycodes': 'error',
+  'vue/no-dupe-keys': 'error',
+  'vue/no-dupe-v-else-if': 'error',
+  'vue/no-duplicate-attributes': 'error',
+  'vue/no-export-in-script-setup': 'error',
+  'vue/no-expose-after-await': 'error',
+  'vue/no-lifecycle-after-await': 'error',
+  'vue/no-mutating-props': 'error',
+  'vue/no-parsing-error': 'error',
+  'vue/no-ref-as-operand': 'error',
+  'vue/no-reserved-component-names': 'error',
+  'vue/no-reserved-keys': 'error',
+  'vue/no-reserved-props': 'error',
+  'vue/no-shared-component-data': 'error',
+  'vue/no-side-effects-in-computed-properties': 'error',
+  'vue/no-template-key': 'error',
+  'vue/no-textarea-mustache': 'error',
+  'vue/no-unused-components': 'error',
+  'vue/no-unused-vars': 'error',
+  'vue/no-use-computed-property-like-method': 'error',
+  'vue/no-use-v-if-with-v-for': 'error',
+  'vue/no-useless-template-attributes': 'error',
+  'vue/no-v-for-template-key-on-child': 'error',
+  'vue/no-v-text-v-html-on-component': 'error',
+  'vue/no-watch-after-await': 'error',
+  'vue/prefer-import-from-vue': 'error',
+  'vue/require-component-is': 'error',
+  'vue/require-prop-type-constructor': 'error',
+  'vue/require-render-return': 'error',
+  'vue/require-slots-as-functions': 'error',
+  'vue/require-toggle-inside-transition': 'error',
+  'vue/require-v-for-key': 'error',
+  'vue/require-valid-default-prop': 'error',
+  'vue/return-in-computed-property': 'error',
+  'vue/return-in-emits-validator': 'error',
+  'vue/use-v-on-exact': 'error',
+  'vue/valid-attribute-name': 'error',
+  'vue/valid-define-emits': 'error',
+  'vue/valid-define-options': 'error',
+  'vue/valid-define-props': 'error',
+  'vue/valid-next-tick': 'error',
+  'vue/valid-template-root': 'error',
+  'vue/valid-v-bind': 'error',
+  'vue/valid-v-cloak': 'error',
+  'vue/valid-v-else-if': 'error',
+  'vue/valid-v-else': 'error',
+  'vue/valid-v-for': 'error',
+  'vue/valid-v-html': 'error',
+  'vue/valid-v-if': 'error',
+  'vue/valid-v-is': 'error',
+  'vue/valid-v-memo': 'error',
+  'vue/valid-v-model': 'error',
+  'vue/valid-v-on': 'error',
+  'vue/valid-v-once': 'error',
+  'vue/valid-v-pre': 'error',
+  'vue/valid-v-show': 'error',
+  'vue/valid-v-slot': 'error',
+  'vue/valid-v-text': 'error',
+
+  // Copied from Vue ESLint's "vue3-strongly-recommended-error" rules
+  'vue/attribute-hyphenation': 'error',
+  'vue/component-definition-name-casing': 'error',
+  'vue/first-attribute-linebreak': 'error',
+  'vue/html-closing-bracket-newline': 'error',
+  'vue/html-closing-bracket-spacing': 'error',
+  'vue/html-end-tags': 'error',
+  'vue/html-indent': 'error',
+  'vue/html-quotes': 'error',
+  'vue/html-self-closing': 'error',
+  'vue/max-attributes-per-line': 'error',
+  'vue/multiline-html-element-content-newline': 'error',
+  'vue/mustache-interpolation-spacing': 'error',
+  'vue/no-multi-spaces': 'error',
+  'vue/no-spaces-around-equal-signs-in-attribute': 'error',
+  'vue/no-template-shadow': 'error',
+  'vue/one-component-per-file': 'error',
+  'vue/prop-name-casing': 'error',
+  'vue/require-default-prop': 'error',
+  'vue/require-explicit-emits': 'error',
+  'vue/require-prop-types': 'error',
+  'vue/singleline-html-element-content-newline': 'error',
+  'vue/v-bind-style': 'error',
+  'vue/v-on-event-hyphenation': [
+    'error',
+    'always',
+    {
+      autofix: true,
+    },
+  ],
+  'vue/v-on-style': 'error',
+  'vue/v-slot-style': 'error',
+
+  // Copied from Vue ESLint's "vue3-recommended-error" rules
+  'vue/attributes-order': 'error',
+  'vue/block-order': 'error',
+  'vue/no-lone-template': 'error',
+  'vue/no-multiple-slot-args': 'error',
+  'vue/no-required-prop-with-default': 'error',
+  'vue/no-v-html': 'error',
+  'vue/order-in-components': 'error',
+  'vue/this-in-template': 'error',
+
+  // Copied from Vue ESLint's "no-layout-rules" rules
+  'vue/array-bracket-newline': 'off',
+  'vue/array-bracket-spacing': 'off',
+  'vue/array-element-newline': 'off',
+  'vue/arrow-spacing': 'off',
+  'vue/block-spacing': 'off',
+  'vue/block-tag-newline': 'off',
+  'vue/brace-style': 'off',
+  'vue/comma-dangle': 'off',
+  'vue/comma-spacing': 'off',
+  'vue/comma-style': 'off',
+  'vue/define-macros-order': 'off',
+  'vue/dot-location': 'off',
+  'vue/first-attribute-linebreak': 'off',
+  'vue/func-call-spacing': 'off',
+  'vue/html-closing-bracket-newline': 'off',
+  'vue/html-closing-bracket-spacing': 'off',
+  'vue/html-comment-content-newline': 'off',
+  'vue/html-comment-content-spacing': 'off',
+  'vue/html-comment-indent': 'off',
+  'vue/html-indent': 'off',
+  'vue/html-quotes': 'off',
+  'vue/html-self-closing': 'off',
+  'vue/key-spacing': 'off',
+  'vue/keyword-spacing': 'off',
+  'vue/max-attributes-per-line': 'off',
+  'vue/max-len': 'off',
+  'vue/multiline-html-element-content-newline': 'off',
+  'vue/multiline-ternary': 'off',
+  'vue/mustache-interpolation-spacing': 'off',
+  'vue/new-line-between-multi-line-property': 'off',
+  'vue/no-extra-parens': 'off',
+  'vue/no-multi-spaces': 'off',
+  'vue/no-spaces-around-equal-signs-in-attribute': 'off',
+  'vue/object-curly-newline': 'off',
+  'vue/object-curly-spacing': 'off',
+  'vue/object-property-newline': 'off',
+  'vue/operator-linebreak': 'off',
+  'vue/padding-line-between-blocks': 'off',
+  'vue/padding-line-between-tags': 'off',
+  'vue/padding-lines-in-component-definition': 'off',
+  'vue/quote-props': 'off',
+  'vue/script-indent': 'off',
+  'vue/singleline-html-element-content-newline': 'off',
+  'vue/space-in-parens': 'off',
+  'vue/space-infix-ops': 'off',
+  'vue/space-unary-ops': 'off',
+  'vue/template-curly-spacing': 'off',
+  'vue/v-for-delimiter-style': 'off',
+
+  // Internal rules
+  'no-useless-assignment': 'off', // Doesn't work well in Vue SFCs
+};
+
+/* Configuration //////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+export default [
+  // Javascript files
   {
-    extends: [
-      eslint.configs.recommended,
-      ...typescriptEslint.configs.recommended,
-      ...vuePlugin.configs['flat/recommended-error'],
-    ],
-    files: ['**/*.{ts,vue}'],
+    files: ['**/*.{cjs,mjs,js}'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
       globals: globals.browser,
-      parserOptions: {
-        parser: typescriptEslint.parser,
-      },
+    },
+    plugins: {
+      import: importPlugin,
+      'simple-import-sort': simpleImportSort,
+      'unused-imports': unusedImports,
+      vue: vuePlugin,
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': 'off', // handled by eslint-plugin-unused-imports
+      ...importRules,
+      ...javascriptRules,
+      ...vueRules,
+      'no-unused-vars': 'off', // Handled by unused-imports
     },
   },
 
-  eslintPrettierConfig,
-]);
+  // Typescript files
+  {
+    files: ['**/*.ts'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: globals.browser,
+      parser: typescriptEslint.parser,
+      parserOptions: {
+        projectService: true,
+        extraFileExtensions: ['.vue'],
+      },
+    },
+    plugins: {
+      import: importPlugin,
+      'simple-import-sort': simpleImportSort,
+      'unused-imports': unusedImports,
+      '@typescript-eslint': typescriptEslint.plugin,
+      vue: vuePlugin,
+    },
+    rules: {
+      ...importRules,
+      ...javascriptRules,
+      ...typescriptRules,
+      ...vueRules,
+      'no-unused-vars': 'off', // Handled by unused-imports
+      '@typescript-eslint/no-unused-vars': 'off', // Handled by unused-imports
+    },
+  },
+
+  // Vue files
+  {
+    files: ['**/*.vue'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: globals.browser,
+      parser: vueParser,
+      parserOptions: {
+        parser: typescriptEslint.parser,
+        projectService: true,
+        extraFileExtensions: ['.vue'],
+      },
+    },
+    processor: 'vue/vue',
+    plugins: {
+      import: importPlugin,
+      'simple-import-sort': simpleImportSort,
+      'unused-imports': unusedImports,
+      '@typescript-eslint': typescriptEslint.plugin,
+      vue: vuePlugin,
+    },
+    rules: {
+      ...importRules,
+      ...javascriptRules,
+      ...typescriptRules,
+      ...vueRules,
+      'no-unused-vars': 'off', // Handled by unused-imports
+      '@typescript-eslint/no-unused-vars': 'off', // Handled by unused-imports
+    },
+  },
+
+  // Prettier integration - must be last to override formatting rules
+  prettierConfig,
+
+  // Ignore patterns
+  {
+    ignores: ['node_modules', 'dist', '**/{.*rc,*.config}.{js,cjs,mjs,ts}'],
+  },
+];

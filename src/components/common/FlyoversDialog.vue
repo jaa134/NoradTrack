@@ -1,7 +1,7 @@
 <script setup lang="ts">
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  import { Flyover, flyoverProjectionDurationDays, SpaceObject } from '@/utilities/application.js';
+  import { type Flyover, flyoverProjectionDurationDays, type SpaceObject } from '@/utilities/application.js';
 
   import BasicDialog from '@/components/common/BasicDialog.vue';
   import FlyoverListItem from '@/components/common/FlyoverListItem.vue';

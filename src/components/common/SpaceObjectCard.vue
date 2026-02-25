@@ -8,8 +8,8 @@
     eciToGeodetic,
     gstime,
     json2satrec,
-    Kilometer,
-    KilometerPerSecond,
+    type Kilometer,
+    type KilometerPerSecond,
     propagate,
   } from 'satellite.js';
   import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
@@ -17,7 +17,7 @@
   import {
     flyoverProjectionDurationDays,
     getFlyovers,
-    SpaceObject,
+    type SpaceObject,
     spaceObjectMarkerFocusColor,
   } from '@/utilities/application.js';
 
@@ -161,11 +161,19 @@
 
   const defaultText = 'Unknown';
 
-  const isBlank = (value: unknown) => value === null || value === undefined || value === '';
+  const isBlank = (value: unknown) => {
+    return value === null || value === undefined || value === '';
+  };
 
-  const formatText = (value: unknown) => (isBlank(value) ? defaultText : String(value));
+  const formatText = (value: string | null | undefined) => {
+    if (isBlank(value)) {
+      return defaultText;
+    }
 
-  const formatNumber = (value: unknown, digits = 2, unit?: string) => {
+    return value;
+  };
+
+  const formatNumber = (value: number | null | undefined, digits = 2, unit?: string) => {
     if (isBlank(value)) {
       return defaultText;
     }

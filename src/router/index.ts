@@ -12,7 +12,7 @@ export enum RouteName {
   NotFound = 'NotFound',
 }
 
-const routes: Array<RouteRecordRaw> = [
+const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: RouteName.Home,

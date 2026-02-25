@@ -3,7 +3,7 @@
 
   import { PhCheck } from '@phosphor-icons/vue';
 
-  import { SpaceObject, spaceObjectMarkerFocusColor } from '@/utilities/application.js';
+  import { type SpaceObject, spaceObjectMarkerFocusColor } from '@/utilities/application.js';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
 
