@@ -2,7 +2,17 @@
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   import { PhArrowSquareOut, PhQuestion, PhX } from '@phosphor-icons/vue';
-  import { computed, ref, watch } from 'vue';
+  import {
+    degreesLat,
+    degreesLong,
+    eciToGeodetic,
+    gstime,
+    Kilometer,
+    KilometerPerSecond,
+    propagate,
+    twoline2satrec,
+  } from 'satellite.js';
+  import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 
   import {
     flyoverProjectionDurationDays,
@@ -48,6 +58,72 @@
     (newNoradId) => {
       spaceObject.value = lookupCachedSpaceObject(newNoradId);
       spaceObjectTle.value = getCachedSpaceObjectTle(newNoradId);
+    },
+    {
+      immediate: true,
+    },
+  );
+
+  /* TLE derivation ///////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const propagationDate = ref(new Date());
+  let propagationInterval: number | null = null;
+
+  onMounted(() => {
+    propagationInterval = setInterval(() => {
+      propagationDate.value = new Date();
+    }, 1000);
+  });
+
+  onBeforeUnmount(() => {
+    if (propagationInterval !== null) {
+      clearInterval(propagationInterval);
+    }
+  });
+
+  const satrec = computed(() => {
+    if (!spaceObjectTle.value) {
+      return null;
+    }
+
+    return twoline2satrec(spaceObjectTle.value.line1, spaceObjectTle.value.line2);
+  });
+
+  const tleDerivedData = reactive<{
+    longitude: number | null;
+    latitude: number | null;
+    altitude: Kilometer | null;
+    velocity: KilometerPerSecond | null;
+  }>({
+    longitude: null,
+    latitude: null,
+    altitude: null,
+    velocity: null,
+  });
+
+  watch(
+    [propagationDate, satrec],
+    () => {
+      if (!satrec.value) {
+        return;
+      }
+
+      const propagatedTle = propagate(satrec.value, propagationDate.value);
+      if (!propagatedTle) {
+        tleDerivedData.longitude = null;
+        tleDerivedData.latitude = null;
+        tleDerivedData.altitude = null;
+        tleDerivedData.velocity = null;
+        return;
+      }
+
+      const geodeticPosition = eciToGeodetic(propagatedTle.position, gstime(propagationDate.value));
+      tleDerivedData.longitude = degreesLong(geodeticPosition.longitude);
+      tleDerivedData.latitude = degreesLat(geodeticPosition.latitude);
+      tleDerivedData.altitude = geodeticPosition.height;
+      tleDerivedData.velocity = Math.sqrt(
+        propagatedTle.velocity.x ** 2 + propagatedTle.velocity.y ** 2 + propagatedTle.velocity.z ** 2,
+      );
     },
     {
       immediate: true,
@@ -109,6 +185,24 @@
     const formatted = parsedValue.toFixed(digits);
     return unit ? `${formatted} ${unit}` : formatted;
   };
+
+  const formatLatitude = (value: number | null) => {
+    if (typeof value !== 'number') {
+      return defaultText;
+    }
+
+    const unit = value > 0 ? 'N' : 'S';
+    return `${Math.abs(value).toFixed(0)}° ${unit}`;
+  };
+
+  const formatLongitude = (value: number | null) => {
+    if (typeof value !== 'number') {
+      return defaultText;
+    }
+
+    const unit = value > 0 ? 'E' : 'W';
+    return `${Math.abs(value).toFixed(0)}° ${unit}`;
+  };
 </script>
 
 <template>
@@ -161,16 +255,18 @@
             <span class="value">{{ formatNumber(spaceObject.info.meanMotion, 2, 'rev/day') }}</span>
           </div>
           <div class="item">
-            <span class="label">Inclination</span>
-            <span class="value">{{ formatNumber(spaceObject.info.inclination, 3, 'deg') }}</span>
+            <span class="label">Position</span>
+            <span class="value">
+              {{ formatLatitude(tleDerivedData.latitude) }}, {{ formatLongitude(tleDerivedData.longitude) }}
+            </span>
           </div>
           <div class="item">
-            <span class="label">Eccentricity</span>
-            <span class="value">{{ formatNumber(spaceObject.info.eccentricity, 6) }}</span>
+            <span class="label">Altitude</span>
+            <span class="value">{{ formatNumber(tleDerivedData.altitude, 0, 'km') }}</span>
           </div>
           <div class="item">
-            <span class="label">Rev at epoch</span>
-            <span class="value">{{ formatNumber(spaceObject.info.revAtEpoch, 0) }}</span>
+            <span class="label">Velocity</span>
+            <span class="value">{{ formatNumber(tleDerivedData.velocity, 2, 'km/s') }}</span>
           </div>
           <div class="item">
             <span class="label">Flyovers</span>
@@ -182,14 +278,14 @@
                 v-tooltip.top="flyoversTooltipContent"
                 @click="toggleFlyoversDialog"
               >
-                Projecting {{ flyovers.length }}
+                {{ flyovers.length }} projected
               </button>
             </span>
             <span
               v-else
               class="value"
             >
-              <span>Unknown</span>
+              <span>{{ defaultText }}</span>
               <PhQuestion
                 v-tooltip="{
                   content: 'Enable location services to see flyovers',
