@@ -105,18 +105,20 @@
 
   const toggleNoradId = (noradId: number) => {
     cancelHide();
-    if (applicationStore.selectedNoradIds.has(noradId)) {
-      applicationStore.selectedNoradIds.delete(noradId);
+    const selectedNoradIds = new Set(applicationStore.selectedNoradIds);
+    if (selectedNoradIds.has(noradId)) {
+      selectedNoradIds.delete(noradId);
     } else {
-      applicationStore.selectedNoradIds.add(noradId);
+      selectedNoradIds.add(noradId);
     }
+    applicationStore.selectedNoradIds = selectedNoradIds;
   };
 
   const clearSelectedNoradIds = (event: Event) => {
     event.preventDefault();
     event.stopPropagation();
     cancelHide();
-    applicationStore.selectedNoradIds.clear();
+    applicationStore.selectedNoradIds = new Set();
   };
 
   /* Focus ////////////////////////////////////////////////////////////////////////////////////////////////////////// */

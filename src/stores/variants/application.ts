@@ -1,6 +1,6 @@
 /* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-import { ref, watch } from 'vue';
+import { ref, shallowRef, watch } from 'vue';
 
 import { getUserPosition, type UserPosition } from '@/utilities/application.js';
 import { createStore } from '@/utilities/store.js';
@@ -25,7 +25,7 @@ export const useApplicationStore = createStore(
 
     const searchText = ref('YAM-');
 
-    const selectedNoradIds = ref(new Set<number>());
+    const selectedNoradIds = shallowRef<Set<number>>(new Set());
     const focusedNoradId = ref<number | null>(null);
 
     watch(

@@ -1,7 +1,7 @@
 <script setup lang="ts">
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  import type { FeatureCollection } from 'geojson';
+  import { type FeatureCollection } from 'geojson';
   import { Map as OlMap } from 'ol';
   import { easeOut } from 'ol/easing.js';
   import Feature from 'ol/Feature.js';
@@ -22,9 +22,11 @@
     createLabelElement,
     eventHub,
     EventType,
+    getSpaceObjectDisplayText,
     getSpaceObjectMarker,
     getUserPositionMarker,
     type Marker,
+    propagateOmm,
     type SpaceObjectMarker,
     spaceObjectMarkerColor,
     spaceObjectMarkerFocusColor,
@@ -164,6 +166,105 @@
     map = null;
   };
 
+  /* Camera positioning ///////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const zoomStep = 1;
+
+  const zoom = (getZoomLevel: (view: View) => number | null | undefined, center = false) => {
+    if (!map) {
+      return;
+    }
+
+    const currentView = map.getView();
+
+    const zoomLevel = getZoomLevel(currentView);
+    if (typeof zoomLevel !== 'number') {
+      return;
+    }
+
+    currentView.animate({
+      center: center ? [0, 0] : undefined,
+      zoom: zoomLevel,
+      duration: 500,
+      easing: easeOut,
+    });
+  };
+
+  const fitToScreen = () => {
+    const getZoomLevel = (view: View) => {
+      return view.getConstrainedZoom(view.getMinZoom());
+    };
+    zoom(getZoomLevel, true);
+  };
+
+  const zoomIn = () => {
+    const getZoomLevel = (view: View) => {
+      const currentZoom = view.getZoom();
+      if (typeof currentZoom !== 'number') {
+        return null;
+      }
+      return view.getConstrainedZoom(currentZoom + zoomStep);
+    };
+    zoom(getZoomLevel);
+  };
+
+  const zoomOut = () => {
+    const getZoomLevel = (view: View) => {
+      const currentZoom = view.getZoom();
+      if (typeof currentZoom !== 'number') {
+        return null;
+      }
+      return view.getConstrainedZoom(currentZoom - zoomStep);
+    };
+    zoom(getZoomLevel);
+  };
+
+  const moveCameraToNoradId = (noradId: number) => {
+    if (!map) {
+      return;
+    }
+
+    const spaceObject = lookupCachedSpaceObject(noradId);
+    if (!spaceObject) {
+      return;
+    }
+
+    const propagatedOmm = propagateOmm(spaceObject.omm, new Date());
+    if (!propagatedOmm) {
+      return;
+    }
+
+    const center = fromLonLat([propagatedOmm.longitude, propagatedOmm.latitude]);
+
+    // Clamp the center-Y so the viewport edges stay within the projection extent
+    const size = map.getSize();
+    const view = map.getView();
+    const resolution = view.getResolution();
+    const projExtent = view.getProjection().getExtent();
+    const viewportHeight = size?.[1];
+    const extentTop = projExtent[3];
+    const extentBottom = projExtent[1];
+    const centerY = center[1];
+    if (
+      resolution &&
+      typeof viewportHeight === 'number' &&
+      typeof extentTop === 'number' &&
+      typeof extentBottom === 'number' &&
+      typeof centerY === 'number'
+    ) {
+      const halfViewHeight = (resolution * viewportHeight) / 2;
+      const minY = extentBottom + halfViewHeight;
+      const maxY = extentTop - halfViewHeight;
+      center[1] = Math.max(minY, Math.min(maxY, centerY));
+    }
+
+    view.animate({
+      center,
+      duration: 500,
+      easing: easeOut,
+    });
+  };
+
   /* Object visuals ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const buildUserPositionMarkerVisuals = () => {
@@ -249,6 +350,7 @@
 
       const marker = getSpaceObjectMarker(spaceObject, date);
       if (!marker) {
+        console.error(`Failed to propagate position for ${getSpaceObjectDisplayText(spaceObject)}.`);
         continue;
       }
 
@@ -271,8 +373,14 @@
 
   watch(
     () => applicationStore.selectedNoradIds,
-    () => {
+    (newSelectedNoradIds, oldSelectedNoradIds) => {
       updateMarkers(new Date());
+
+      const addedNoradIds = newSelectedNoradIds.difference(oldSelectedNoradIds ?? new Set());
+      const noradIdToView = addedNoradIds.values().next().value;
+      if (noradIdToView) {
+        moveCameraToNoradId(noradIdToView);
+      }
     },
     {
       immediate: true,
@@ -287,8 +395,12 @@
 
   watch(
     () => applicationStore.focusedNoradId,
-    () => {
+    (newFocusedNoradId) => {
       updateMarkers(new Date());
+
+      if (newFocusedNoradId) {
+        moveCameraToNoradId(newFocusedNoradId);
+      }
     },
   );
 
@@ -373,59 +485,6 @@
       cancelAnimationFrame(animationFrame);
       animationFrame = null;
     }
-  };
-
-  /* Zoom /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
-
-  const zoomStep = 1;
-
-  const zoom = (getZoomLevel: (view: View) => number | null | undefined, center = false) => {
-    if (!map) {
-      return;
-    }
-
-    const currentView = map.getView();
-
-    const zoomLevel = getZoomLevel(currentView);
-    if (typeof zoomLevel !== 'number') {
-      return;
-    }
-
-    currentView.animate({
-      center: center ? [0, 0] : undefined,
-      zoom: zoomLevel,
-      duration: 500,
-      easing: easeOut,
-    });
-  };
-
-  const fitToScreen = () => {
-    const getZoomLevel = (view: View) => {
-      return view.getConstrainedZoom(view.getMinZoom());
-    };
-    zoom(getZoomLevel, true);
-  };
-
-  const zoomIn = () => {
-    const getZoomLevel = (view: View) => {
-      const currentZoom = view.getZoom();
-      if (typeof currentZoom !== 'number') {
-        return null;
-      }
-      return view.getConstrainedZoom(currentZoom + zoomStep);
-    };
-    zoom(getZoomLevel);
-  };
-
-  const zoomOut = () => {
-    const getZoomLevel = (view: View) => {
-      const currentZoom = view.getZoom();
-      if (typeof currentZoom !== 'number') {
-        return null;
-      }
-      return view.getConstrainedZoom(currentZoom - zoomStep);
-    };
-    zoom(getZoomLevel);
   };
 
   /* Eventing /////////////////////////////////////////////////////////////////////////////////////////////////////// */

@@ -13,6 +13,7 @@ import {
   gstime,
   json2satrec,
   type Kilometer,
+  KilometerPerSecond,
   type OMMJsonObject,
   propagate,
   radiansToDegrees,
@@ -29,26 +30,9 @@ export interface SpaceObject {
   omm: OMMJsonObject;
 }
 
-export interface MarkerBase {
-  label: string;
-  latitude: number;
-  longitude: number;
-  altitude: number;
-}
-
-export interface SpaceObjectMarker extends MarkerBase {
-  noradId: number;
-}
-
-export interface UserPositionMarker extends MarkerBase {
-  accuracy: number;
-}
-
-export type Marker = SpaceObjectMarker | UserPositionMarker;
-
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-const earthRadiusKm = 6371;
+export const earthRadius: Kilometer = 6371;
 
 /* Format /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -87,7 +71,51 @@ export const createLabelElement = (text: string) => {
   return wrapper;
 };
 
+/* Propagate OMM //////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+export interface PropagatedOmm {
+  longitude: Degrees;
+  latitude: Degrees;
+  altitude: Kilometer;
+  velocity: KilometerPerSecond;
+}
+
+export const propagateOmm = (omm: OMMJsonObject, date: Date): PropagatedOmm | null => {
+  const satrec = json2satrec(omm);
+
+  const propagatedOmm = propagate(satrec, date);
+  if (!propagatedOmm) {
+    return null;
+  }
+
+  const geodetic = eciToGeodetic(propagatedOmm.position, gstime(date));
+
+  return {
+    longitude: degreesLong(geodetic.longitude),
+    latitude: degreesLat(geodetic.latitude),
+    altitude: geodetic.height,
+    velocity: Math.sqrt(propagatedOmm.velocity.x ** 2 + propagatedOmm.velocity.y ** 2 + propagatedOmm.velocity.z ** 2),
+  };
+};
+
 /* Marker /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+export interface MarkerBase {
+  label: string;
+  latitude: number;
+  longitude: number;
+  altitude: number;
+}
+
+export interface SpaceObjectMarker extends MarkerBase {
+  noradId: number;
+}
+
+export interface UserPositionMarker extends MarkerBase {
+  accuracy: number;
+}
+
+export type Marker = SpaceObjectMarker | UserPositionMarker;
 
 export const getUserPositionMarker = (userPosition: UserPosition): UserPositionMarker => {
   return {
@@ -100,21 +128,16 @@ export const getUserPositionMarker = (userPosition: UserPosition): UserPositionM
 };
 
 export const getSpaceObjectMarker = (spaceObject: SpaceObject, date: Date): SpaceObjectMarker | null => {
-  const satrec = json2satrec(spaceObject.omm);
-  const positionAndVelocity = propagate(satrec, date);
-  if (!positionAndVelocity?.position) {
-    console.error(`Failed to propagate position for ${getSpaceObjectDisplayText(spaceObject)}.`);
+  const propagatedOmm = propagateOmm(spaceObject.omm, date);
+  if (!propagatedOmm) {
     return null;
   }
 
-  const geodetic = eciToGeodetic(positionAndVelocity.position, gstime(date));
-  const altitude = Math.max(0, geodetic.height / earthRadiusKm);
-
   return {
     label: spaceObject.name,
-    latitude: degreesLat(geodetic.latitude),
-    longitude: degreesLong(geodetic.longitude),
-    altitude,
+    latitude: propagatedOmm.latitude,
+    longitude: propagatedOmm.longitude,
+    altitude: propagatedOmm.altitude,
     noradId: spaceObject.noradId,
   };
 };

@@ -1,20 +1,22 @@
 <script setup lang="ts">
   /* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  import type { Feature, FeatureCollection } from 'geojson';
-  import type { GlobeInstance } from 'globe.gl';
-  import Globe from 'globe.gl';
+  import { type Feature, type FeatureCollection } from 'geojson';
+  import Globe, { type GlobeInstance } from 'globe.gl';
   import { Group, Mesh, MeshLambertMaterial, SphereGeometry } from 'three';
   import { onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue';
 
   import {
     countryGeoJsonColor,
     createLabelElement,
+    earthRadius,
     eventHub,
     EventType,
+    getSpaceObjectDisplayText,
     getSpaceObjectMarker,
     getUserPositionMarker,
     type Marker,
+    propagateOmm,
     type SpaceObjectMarker,
     spaceObjectMarkerColor,
     spaceObjectMarkerFocusColor,
@@ -93,7 +95,7 @@
     globe.objectThreeObject((marker) => buildMarkerVisuals(marker as Marker));
     globe.objectLat((marker) => (marker as Marker).latitude);
     globe.objectLng((marker) => (marker as Marker).longitude);
-    globe.objectAltitude((marker) => (marker as Marker).altitude);
+    globe.objectAltitude((marker) => (marker as Marker).altitude / earthRadius);
     globe.objectLabel(() => '');
 
     // Configure labels
@@ -101,7 +103,7 @@
     globe.htmlElement((marker) => createLabelElement((marker as Marker).label));
     globe.htmlLat((marker) => (marker as Marker).latitude);
     globe.htmlLng((marker) => (marker as Marker).longitude);
-    globe.htmlAltitude((marker) => (marker as Marker).altitude);
+    globe.htmlAltitude((marker) => (marker as Marker).altitude / earthRadius);
 
     // Configure countries GeoJSON
     globe.polygonAltitude(0);
@@ -141,6 +143,63 @@
 
     globe._destructor();
     globe = null;
+  };
+
+  /* Camera positioning ///////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const zoomStep = 0.3;
+
+  const zoom = (getNewAltitude: (currentAltitude: number) => number) => {
+    if (!globe) {
+      return {
+        lat: globeStore.pov.lat,
+        lng: globeStore.pov.lng,
+        altitude: globeStore.zoom,
+      };
+    }
+
+    const pov = globe.pointOfView();
+
+    const newAltitude = getNewAltitude(pov.altitude);
+
+    globe.pointOfView(
+      {
+        lat: pov.lat,
+        lng: pov.lng,
+        altitude: newAltitude,
+      },
+      500,
+    );
+  };
+
+  const fitToScreen = () => {
+    zoom(() => 1.5);
+  };
+
+  const zoomIn = () => {
+    zoom((altitude) => altitude - zoomStep * altitude);
+  };
+
+  const zoomOut = () => {
+    zoom((altitude) => altitude + zoomStep * altitude);
+  };
+
+  const moveCameraToNoradId = (noradId: number) => {
+    if (!globe) {
+      return;
+    }
+
+    const spaceObject = lookupCachedSpaceObject(noradId);
+    if (!spaceObject) {
+      return;
+    }
+
+    const propagatedOmm = propagateOmm(spaceObject.omm, new Date());
+    if (!propagatedOmm) {
+      return;
+    }
+
+    globe.pointOfView({ lat: propagatedOmm.latitude, lng: propagatedOmm.longitude }, 500);
   };
 
   /* Object visuals ///////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -209,6 +268,7 @@
 
       const marker = getSpaceObjectMarker(spaceObject, date);
       if (!marker) {
+        console.error(`Failed to propagate position for ${getSpaceObjectDisplayText(spaceObject)}.`);
         continue;
       }
 
@@ -223,8 +283,14 @@
 
   watch(
     () => applicationStore.selectedNoradIds,
-    () => {
+    (newSelectedNoradIds, oldSelectedNoradIds) => {
       updateMarkers(new Date());
+
+      const addedNoradIds = newSelectedNoradIds.difference(oldSelectedNoradIds ?? new Set());
+      const noradIdToView = addedNoradIds.values().next().value;
+      if (noradIdToView) {
+        moveCameraToNoradId(noradIdToView);
+      }
     },
     {
       immediate: true,
@@ -239,8 +305,12 @@
 
   watch(
     () => applicationStore.focusedNoradId,
-    () => {
+    (newFocusedNoradId) => {
       updateMarkers(new Date());
+
+      if (newFocusedNoradId) {
+        moveCameraToNoradId(newFocusedNoradId);
+      }
     },
   );
 
@@ -313,45 +383,6 @@
       cancelAnimationFrame(animationFrame);
       animationFrame = null;
     }
-  };
-
-  /* Zoom /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
-
-  const zoomStep = 0.3;
-
-  const zoom = (getNewAltitude: (currentAltitude: number) => number) => {
-    if (!globe) {
-      return {
-        lat: globeStore.pov.lat,
-        lng: globeStore.pov.lng,
-        altitude: globeStore.zoom,
-      };
-    }
-
-    const pov = globe.pointOfView();
-
-    const newAltitude = getNewAltitude(pov.altitude);
-
-    globe.pointOfView(
-      {
-        lat: pov.lat,
-        lng: pov.lng,
-        altitude: newAltitude,
-      },
-      500,
-    );
-  };
-
-  const fitToScreen = () => {
-    zoom(() => 1.5);
-  };
-
-  const zoomIn = () => {
-    zoom((altitude) => altitude - zoomStep * altitude);
-  };
-
-  const zoomOut = () => {
-    zoom((altitude) => altitude + zoomStep * altitude);
   };
 
   /* Eventing /////////////////////////////////////////////////////////////////////////////////////////////////////// */

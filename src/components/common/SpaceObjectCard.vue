@@ -2,21 +2,13 @@
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   import { PhArrowSquareOut, PhQuestion, PhX } from '@phosphor-icons/vue';
-  import {
-    degreesLat,
-    degreesLong,
-    eciToGeodetic,
-    gstime,
-    json2satrec,
-    type Kilometer,
-    type KilometerPerSecond,
-    propagate,
-  } from 'satellite.js';
-  import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+  import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
   import {
     flyoverProjectionDurationDays,
     getFlyovers,
+    type PropagatedOmm,
+    propagateOmm,
     type SpaceObject,
     spaceObjectMarkerFocusColor,
   } from '@/utilities/application.js';
@@ -78,49 +70,16 @@
     }
   });
 
-  const satrec = computed(() => {
-    if (!spaceObject.value) {
-      return null;
-    }
-
-    return json2satrec(spaceObject.value.omm);
-  });
-
-  const ommDerivedData = reactive<{
-    longitude: number | null;
-    latitude: number | null;
-    altitude: Kilometer | null;
-    velocity: KilometerPerSecond | null;
-  }>({
-    longitude: null,
-    latitude: null,
-    altitude: null,
-    velocity: null,
-  });
+  const propagatedOmm = ref<PropagatedOmm | null>(null);
 
   watch(
-    [propagationDate, satrec],
+    [spaceObject, propagationDate],
     () => {
-      if (!satrec.value) {
+      if (!spaceObject.value) {
         return;
       }
 
-      const propagatedOmm = propagate(satrec.value, propagationDate.value);
-      if (!propagatedOmm) {
-        ommDerivedData.longitude = null;
-        ommDerivedData.latitude = null;
-        ommDerivedData.altitude = null;
-        ommDerivedData.velocity = null;
-        return;
-      }
-
-      const geodeticPosition = eciToGeodetic(propagatedOmm.position, gstime(propagationDate.value));
-      ommDerivedData.longitude = degreesLong(geodeticPosition.longitude);
-      ommDerivedData.latitude = degreesLat(geodeticPosition.latitude);
-      ommDerivedData.altitude = geodeticPosition.height;
-      ommDerivedData.velocity = Math.sqrt(
-        propagatedOmm.velocity.x ** 2 + propagatedOmm.velocity.y ** 2 + propagatedOmm.velocity.z ** 2,
-      );
+      propagatedOmm.value = propagateOmm(spaceObject.value.omm, propagationDate.value);
     },
     {
       immediate: true,
@@ -187,7 +146,7 @@
     return unit ? `${formatted} ${unit}` : formatted;
   };
 
-  const formatLatitude = (value: number | null) => {
+  const formatLatitude = (value: number | null | undefined) => {
     if (typeof value !== 'number') {
       return defaultText;
     }
@@ -196,7 +155,7 @@
     return `${Math.abs(value).toFixed(0)}° ${unit}`;
   };
 
-  const formatLongitude = (value: number | null) => {
+  const formatLongitude = (value: number | null | undefined) => {
     if (typeof value !== 'number') {
       return defaultText;
     }
@@ -258,16 +217,16 @@
           <div class="item">
             <span class="label">Position</span>
             <span class="value">
-              {{ formatLatitude(ommDerivedData.latitude) }}, {{ formatLongitude(ommDerivedData.longitude) }}
+              {{ formatLatitude(propagatedOmm?.latitude) }}, {{ formatLongitude(propagatedOmm?.longitude) }}
             </span>
           </div>
           <div class="item">
             <span class="label">Altitude</span>
-            <span class="value">{{ formatNumber(ommDerivedData.altitude, 0, 'km') }}</span>
+            <span class="value">{{ formatNumber(propagatedOmm?.altitude, 0, 'km') }}</span>
           </div>
           <div class="item">
             <span class="label">Velocity</span>
-            <span class="value">{{ formatNumber(ommDerivedData.velocity, 2, 'km/s') }}</span>
+            <span class="value">{{ formatNumber(propagatedOmm?.velocity, 2, 'km/s') }}</span>
           </div>
           <div class="item">
             <span class="label">Flyovers</span>
