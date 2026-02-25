@@ -12,7 +12,7 @@
   "scripts": {
     "prepare": "husky",
     "dev": "vite",
-    "build": "vite build",
+    "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "lint:ts": "eslint . --ext .js,.mjs,.ts,.vue --quiet",
     "lint:ts:fix": "eslint . --ext .js,.mjs,.ts,.vue --quiet --fix",

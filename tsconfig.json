@@ -7,7 +7,7 @@
     "lib": ["ESNext", "DOM"],
     "allowJs": false,
     "checkJs": false,
-    "jsx": "preserve",                      
+    "jsx": "preserve",
 
     /* Strictness */
     "strict": true,
@@ -33,17 +33,13 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    
+
     /* Vue support */
     "types": ["vite/client"],
-    "baseUrl": ".",                         
+    "baseUrl": ".",
 
     /* Output options (for ts->js) */
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    "removeComments": true,
-    "importHelpers": true
+    "noEmit": true
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue"],
   "exclude": ["node_modules", "dist"]
