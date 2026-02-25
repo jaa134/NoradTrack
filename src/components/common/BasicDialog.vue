@@ -98,7 +98,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--ja-spacing-2x-small);
-    padding: var(--ja-spacing-medium) var(--ja-spacing-large) var(--ja-spacing-large) var(--ja-spacing-large);
+    padding: var(--ja-spacing-medium) 0 0 0;
     width: min(400px, 90dvw);
     max-height: 90dvh;
     border: none;
@@ -132,6 +132,7 @@
     align-items: center;
     justify-content: flex-start;
     gap: var(--ja-spacing-x-small);
+    padding: 0 var(--ja-spacing-large);
     font-size: var(--ja-font-size-large);
   }
 
@@ -144,6 +145,8 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
+    padding: 0 var(--ja-spacing-large) var(--ja-spacing-large) var(--ja-spacing-large);
+    overflow-y: auto;
   }
 </style>
 

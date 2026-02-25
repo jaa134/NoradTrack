@@ -28,20 +28,6 @@ export const useApplicationStore = createStore(
     const selectedNoradIds = ref(new Set<number>());
     const focusedNoradId = ref<number | null>(null);
 
-    const showSettingsDialog = ref(false);
-    const showUserPosition = ref(true);
-    const showCountryGeoJson = ref(false);
-
-    const userPosition = ref<UserPosition | null>(null);
-    getUserPosition()
-      .then((position) => {
-        userPosition.value = position;
-      })
-      .catch((error) => {
-        console.error(error);
-        notify('error', 'Failed to get your location.');
-      });
-
     watch(
       selectedNoradIds,
       (newSelectedNoradIds) => {
@@ -54,6 +40,32 @@ export const useApplicationStore = createStore(
       },
     );
 
+    const showSettingsDialog = ref(false);
+    const showUserPosition = ref(true);
+    const showCountryGeoJson = ref(false);
+
+    const showLocationServicesDialog = ref(true);
+    const userPosition = ref<UserPosition | null>(null);
+
+    watch(
+      showLocationServicesDialog,
+      async (newShowLocationServicesDialog) => {
+        if (newShowLocationServicesDialog) {
+          return;
+        }
+
+        try {
+          userPosition.value = await getUserPosition();
+        } catch (error) {
+          console.error(error);
+          notify('error', 'Failed to get your location.');
+        }
+      },
+      {
+        immediate: true,
+      },
+    );
+
     return {
       routerLoading,
       routerError,
@@ -63,13 +75,20 @@ export const useApplicationStore = createStore(
       showSettingsDialog,
       showUserPosition,
       showCountryGeoJson,
+      showLocationServicesDialog,
       userPosition,
     };
   },
   {
-    persist: {
-      storage: localStorage,
-      pick: ['searchText', 'showUserPosition', 'showCountryGeoJson'],
-    },
+    persist: [
+      {
+        storage: localStorage,
+        pick: ['searchText', 'showUserPosition', 'showCountryGeoJson'],
+      },
+      {
+        storage: sessionStorage,
+        pick: ['showLocationServicesDialog'],
+      },
+    ],
   },
 );

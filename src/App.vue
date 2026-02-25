@@ -5,6 +5,7 @@
 
   import { useApplicationStore } from '@/stores/variants/application.js';
 
+  import LocationServicesDialog from '@/components/common/LocationServicesDialog.vue';
   import SettingsDialog from '@/components/common/SettingsDialog.vue';
   import ObjectSelectionControls from '@/components/controls/ObjectSelectionControls.vue';
   import SettingsControls from '@/components/controls/SettingsControls.vue';
@@ -46,8 +47,6 @@
       />
     </Transition>
 
-    <SettingsDialog v-model="applicationStore.showSettingsDialog" />
-
     <RouterView v-slot="{ Component }">
       <Transition
         :name="transitionName"
@@ -64,6 +63,9 @@
         />
       </Transition>
     </RouterView>
+
+    <SettingsDialog v-model="applicationStore.showSettingsDialog" />
+    <LocationServicesDialog v-model="applicationStore.showLocationServicesDialog" />
   </div>
 </template>
 
