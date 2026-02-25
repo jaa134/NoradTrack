@@ -56,7 +56,7 @@ export const createLabelElement = (text: string) => {
   label.style.left = '50%';
   label.style.bottom = '0';
   label.style.transform = 'translate(-50%, -16px)';
-  label.style.padding = 'var(--ja-spacing-2x-small) var(--ja-spacing-small)';
+  label.style.padding = 'var(--ja-spacing-3x-small) var(--ja-spacing-x-small)';
   label.style.borderRadius = 'var(--ja-border-radius-large)';
   label.style.background = 'color-mix(in srgb, var(--ja-color-neutral-1000) 75%, transparent)';
   label.style.color = 'var(--ja-color-neutral-0)';

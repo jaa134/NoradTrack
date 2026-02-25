@@ -215,7 +215,7 @@
             <span class="value">{{ formatNumber(spaceObject.meanMotion, 2, 'rev/day') }}</span>
           </div>
           <div class="item">
-            <span class="label">Position</span>
+            <span class="label">Ground Pos.</span>
             <span class="value">
               {{ formatLatitude(propagatedOmm?.latitude) }}, {{ formatLongitude(propagatedOmm?.longitude) }}
             </span>
