@@ -5,13 +5,12 @@
   import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
   import {
-    flyoverProjectionDurationDays,
-    getFlyovers,
     type PropagatedOmm,
     propagateOmm,
     type SpaceObject,
     spaceObjectMarkerFocusColor,
   } from '@/utilities/application.js';
+  import { flyoverProjectionDurationDays, getFlyovers } from '@/utilities/flyovers.js';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
 

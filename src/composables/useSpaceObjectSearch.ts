@@ -56,8 +56,6 @@ const filterSpaceObjects = (spaceObjects: SpaceObject[], query: string) => {
 
   const matches = fuse.search(query);
 
-  console.log(`Matched ${matches.length} space objects`);
-
   matches.sort((a, b) => {
     const scoreDiff = (a.score ?? 0) - (b.score ?? 0);
     return scoreDiff !== 0 ? scoreDiff : a.item.name.localeCompare(b.item.name, undefined, { numeric: true });
