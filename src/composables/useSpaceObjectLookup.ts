@@ -1,0 +1,13 @@
+/* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+import { useSearchStore } from '@/stores/variants/search.js';
+
+/* Compose ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+export const useSpaceObjectLookup = () => {
+  const { spaceObjectsLookupMap } = useSearchStore();
+
+  return (noradId: number) => {
+    return spaceObjectsLookupMap.value[noradId] ?? null;
+  };
+};

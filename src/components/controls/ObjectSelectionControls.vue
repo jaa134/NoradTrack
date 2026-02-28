@@ -4,6 +4,7 @@
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
+  import { useSearchStore } from '@/stores/variants/search.js';
 
   import { useSpaceObjectSearch } from '@/composables/useSpaceObjectSearch.js';
 
@@ -16,14 +17,9 @@
 
   const applicationStore = useApplicationStore();
 
-  /* Search ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
+  const { searchText } = useSearchStore();
 
-  const searchText = computed({
-    get: () => applicationStore.searchText,
-    set: (value) => {
-      applicationStore.searchText = value;
-    },
-  });
+  /* Search ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const { results, isLoading } = useSpaceObjectSearch(searchText);
 

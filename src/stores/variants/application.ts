@@ -10,7 +10,7 @@ import { useNotify } from '@/composables/useNotify.js';
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
 const name = 'application';
-const version = 0;
+const version = 1;
 
 /* Store //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -22,8 +22,6 @@ export const useApplicationStore = createStore(
 
     const routerLoading = ref(false);
     const routerError = ref<string | null>(null);
-
-    const searchText = ref('YAM-');
 
     const selectedNoradIds = shallowRef<Set<number>>(new Set());
     const focusedNoradId = ref<number | null>(null);
@@ -69,7 +67,6 @@ export const useApplicationStore = createStore(
     return {
       routerLoading,
       routerError,
-      searchText,
       selectedNoradIds,
       focusedNoradId,
       showSettingsDialog,
@@ -83,7 +80,7 @@ export const useApplicationStore = createStore(
     persist: [
       {
         storage: localStorage,
-        pick: ['searchText', 'showUserPosition', 'showCountryGeoJson'],
+        pick: ['showUserPosition', 'showCountryGeoJson'],
       },
       {
         storage: sessionStorage,

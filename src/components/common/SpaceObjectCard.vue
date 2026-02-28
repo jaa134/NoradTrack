@@ -15,7 +15,7 @@
 
   import { useApplicationStore } from '@/stores/variants/application.js';
 
-  import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
+  import { useSpaceObjectLookup } from '@/composables/useSpaceObjectLookup.js';
 
   import FlyoversDialog from '@/components/common/FlyoversDialog.vue';
 
@@ -39,14 +39,14 @@
 
   /* Lookup ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const { lookupCachedSpaceObject } = useSpaceObjectCache();
+  const lookupSpaceObject = useSpaceObjectLookup();
 
   const spaceObject = ref<SpaceObject | null>(null);
 
   watch(
     () => props.noradId,
     (newNoradId) => {
-      spaceObject.value = lookupCachedSpaceObject(newNoradId);
+      spaceObject.value = lookupSpaceObject(newNoradId);
     },
     {
       immediate: true,

@@ -2,81 +2,30 @@
 
 import Fuse from 'fuse.js';
 import { readonly, type Ref, shallowRef, watch } from 'vue';
-import { z } from 'zod';
 
 import { type SpaceObject } from '@/utilities/application.js';
+import { CelestrakResponseSchema, type OrbitMeanElementsMessageV3 } from '@/utilities/search.js';
+
+import { useSearchStore } from '@/stores/variants/search.js';
 
 import { useNotify } from '@/composables/useNotify.js';
-import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
 
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
+const cacheExpirationThreshold = 1000 * 60 * 60 * 24; // 24 hours
+
 const searchDebounceDelay = 250; // 250ms
-
-/* Utilities //////////////////////////////////////////////////////////////////////////////////////////////////////// */
-
-const getCacheKey = (query: string) => query.trim().toLowerCase();
 
 /* Request tracking ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
-const inflightRequestCache = new Map<string, Promise<SpaceObject[]>>();
-
-const getInflightRequest = (cacheKey: string) => inflightRequestCache.get(cacheKey);
-
-const setInflightRequest = (cacheKey: string, request: Promise<SpaceObject[]>) => {
-  inflightRequestCache.set(cacheKey, request);
-};
-
-const clearInflightRequest = (cacheKey: string) => {
-  inflightRequestCache.delete(cacheKey);
-};
+let inflightRequest: Promise<OrbitMeanElementsMessageV3[]> | null = null;
 
 /* Fetch //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-const OrbitMeanElementsMessageV3Schema = z.object({
-  OBJECT_NAME: z.string(),
-  OBJECT_ID: z.string(),
-  EPOCH: z.string(),
-  MEAN_MOTION: z.number(),
-  ECCENTRICITY: z.number(),
-  INCLINATION: z.number(),
-  RA_OF_ASC_NODE: z.number(),
-  ARG_OF_PERICENTER: z.number(),
-  MEAN_ANOMALY: z.number(),
-  EPHEMERIS_TYPE: z.literal(0),
-  CLASSIFICATION_TYPE: z.enum(['U', 'C']),
-  NORAD_CAT_ID: z.number(),
-  ELEMENT_SET_NO: z.number(),
-  REV_AT_EPOCH: z.number(),
-  BSTAR: z.number(),
-  MEAN_MOTION_DOT: z.number(),
-  MEAN_MOTION_DDOT: z.number(),
-});
-
-type OrbitMeanElementsMessageV3 = z.infer<typeof OrbitMeanElementsMessageV3Schema>;
-
-const CelestrakResponseSchema = z.array(OrbitMeanElementsMessageV3Schema);
-
-const mapCelestrakResult = (omm: OrbitMeanElementsMessageV3): SpaceObject => {
-  return {
-    name: omm.OBJECT_NAME,
-    noradId: omm.NORAD_CAT_ID,
-    objectId: omm.OBJECT_ID,
-    classification: omm.CLASSIFICATION_TYPE,
-    meanMotion: omm.MEAN_MOTION,
-    omm,
-  };
-};
-
-const fetchCelestrakSpaceObjects = async (query: string): Promise<SpaceObject[]> => {
-  const normalizedQuery = query.trim();
-  const isNumericQuery = /^[0-9]+$/.test(normalizedQuery);
-  const searchParam = isNumericQuery ? `CATNR=${normalizedQuery}` : `NAME=${encodeURIComponent(normalizedQuery)}`;
-  const url = `https://celestrak.org/NORAD/elements/gp.php?${searchParam}&FORMAT=JSON`;
-
-  const response = await fetch(url);
+const fetchCelestrakApiData = async (): Promise<OrbitMeanElementsMessageV3[]> => {
+  const response = await fetch('https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json');
   if (!response.ok) {
-    throw new Error(`API response not OK for "${query}": ${response.statusText}`);
+    throw new Error('Celestrak API response not OK.', { cause: response });
   }
 
   const rawBody = await response.text();
@@ -86,23 +35,35 @@ const fetchCelestrakSpaceObjects = async (query: string): Promise<SpaceObject[]>
 
   try {
     const data = JSON.parse(rawBody) as unknown;
-    const parsedData = CelestrakResponseSchema.parse(data);
-    return parsedData.map((entry) => mapCelestrakResult(entry));
+    return CelestrakResponseSchema.parse(data);
   } catch (error) {
-    throw new Error(`Failed to parse API response for "${query}": ${JSON.stringify(error, null, 2)}`, {
-      cause: error,
-    });
+    throw new Error('Failed to parse Celestrak API response.', { cause: error });
   }
 };
 
-/* Sort ///////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+/* Filter /////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-const sortResults = (results: SpaceObject[], query: string) => {
-  const fuse = new Fuse(results, {
-    keys: ['name', 'noradId'],
-    threshold: 1,
+const filterSpaceObjects = (spaceObjects: SpaceObject[], query: string) => {
+  const fuse = new Fuse(spaceObjects, {
+    keys: [
+      { name: 'name', weight: 1 },
+      { name: 'noradId', weight: 0.75 },
+      { name: 'objectId', weight: 0.5 },
+    ],
+    threshold: 0.25,
+    includeScore: true,
   });
-  return fuse.search(query).map((entry) => entry.item);
+
+  const matches = fuse.search(query);
+
+  console.log(`Matched ${matches.length} space objects`);
+
+  matches.sort((a, b) => {
+    const scoreDiff = (a.score ?? 0) - (b.score ?? 0);
+    return scoreDiff !== 0 ? scoreDiff : a.item.name.localeCompare(b.item.name, undefined, { numeric: true });
+  });
+
+  return matches.map((entry) => entry.item);
 };
 
 /* Compose ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
@@ -110,48 +71,41 @@ const sortResults = (results: SpaceObject[], query: string) => {
 export const useSpaceObjectSearch = (searchText: Ref<string>) => {
   const { notify } = useNotify();
 
-  const { getCachedSearchResults, setCachedSearchResults } = useSpaceObjectCache();
+  const { apiData: cachedApiData, spaceObjects } = useSearchStore();
 
   const results = shallowRef<SpaceObject[]>([]);
   const isLoading = shallowRef(false);
 
-  let requestCounter = 0;
   let requestDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   const search = async (query: string) => {
-    const cacheKey = getCacheKey(query);
-    if (!cacheKey) {
-      return [];
-    }
+    isLoading.value = true;
 
-    const cachedSearchResults = getCachedSearchResults(cacheKey);
-    if (cachedSearchResults) {
-      return cachedSearchResults;
-    }
+    try {
+      let apiData: OrbitMeanElementsMessageV3[];
 
-    const inflightRequest = getInflightRequest(cacheKey);
-    if (inflightRequest) {
-      return inflightRequest;
-    }
+      if (cachedApiData.value && Date.now() < cachedApiData.value.expirationTimestamp) {
+        apiData = cachedApiData.value.data;
+      } else {
+        inflightRequest ??= fetchCelestrakApiData().finally(() => {
+          inflightRequest = null;
+        });
 
-    const makeRequest = async () => {
-      try {
-        const fetchedResults = await fetchCelestrakSpaceObjects(query);
-        const sortedResults = sortResults(fetchedResults, query);
-        setCachedSearchResults(cacheKey, sortedResults);
-        return sortedResults;
-      } catch (error) {
-        console.error(error);
-        notify('error', 'Failed to search objects.');
-        return [];
+        apiData = await inflightRequest;
+        cachedApiData.value = {
+          expirationTimestamp: Date.now() + cacheExpirationThreshold,
+          data: apiData,
+        };
       }
-    };
 
-    const request = makeRequest();
-    setInflightRequest(cacheKey, request);
-    const result = await request;
-    clearInflightRequest(cacheKey);
-    return result;
+      results.value = filterSpaceObjects(spaceObjects.value ?? [], query);
+    } catch (error) {
+      console.error(error);
+      notify('error', 'Failed to fetch space objects.');
+      results.value = [];
+    } finally {
+      isLoading.value = false;
+    }
   };
 
   watch(
@@ -159,18 +113,17 @@ export const useSpaceObjectSearch = (searchText: Ref<string>) => {
     (newSearchText) => {
       if (requestDebounceTimer) {
         clearTimeout(requestDebounceTimer);
+        requestDebounceTimer = null;
       }
 
-      requestCounter += 1;
-      const currentRequestId = requestCounter;
+      if (!newSearchText.trim()) {
+        results.value = [];
+        isLoading.value = false;
+        return;
+      }
 
-      requestDebounceTimer = setTimeout(async () => {
-        isLoading.value = true;
-        const newResults = await search(newSearchText);
-        if (requestCounter === currentRequestId) {
-          results.value = newResults;
-          isLoading.value = false;
-        }
+      requestDebounceTimer = setTimeout(() => {
+        void search(newSearchText);
       }, searchDebounceDelay);
     },
     {

@@ -38,7 +38,7 @@
   import { useMapStore } from '@/stores/variants/map.js';
 
   import { useCountriesGeoJson } from '@/composables/useCountriesGeoJson.js';
-  import { useSpaceObjectCache } from '@/composables/useSpaceObjectCache.js';
+  import { useSpaceObjectLookup } from '@/composables/useSpaceObjectLookup.js';
 
   /* Stores ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -48,7 +48,7 @@
 
   /* Cache ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const { lookupCachedSpaceObject } = useSpaceObjectCache();
+  const lookupSpaceObject = useSpaceObjectLookup();
 
   /* Elements /////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -224,7 +224,7 @@
       return;
     }
 
-    const spaceObject = lookupCachedSpaceObject(noradId);
+    const spaceObject = lookupSpaceObject(noradId);
     if (!spaceObject) {
       return;
     }
@@ -343,7 +343,7 @@
     }
 
     for (const noradId of applicationStore.selectedNoradIds) {
-      const spaceObject = lookupCachedSpaceObject(noradId);
+      const spaceObject = lookupSpaceObject(noradId);
       if (!spaceObject) {
         continue;
       }
