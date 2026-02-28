@@ -3,7 +3,15 @@
 
   import { type Feature, type FeatureCollection } from 'geojson';
   import Globe, { type GlobeInstance } from 'globe.gl';
-  import { Group, Mesh, MeshLambertMaterial, SphereGeometry } from 'three';
+  import {
+    AmbientLight,
+    DirectionalLight,
+    Group,
+    Mesh,
+    MeshBasicMaterial,
+    MeshStandardMaterial,
+    SphereGeometry,
+  } from 'three';
   import { onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue';
 
   import {
@@ -23,6 +31,7 @@
     userPositionMarkerColor,
   } from '@/utilities/application.js';
   import { globeBumpImageUrl, globeSkinSourceMap } from '@/utilities/globe.js';
+  import { computeSubSolarPoint } from '@/utilities/solar-terminator.js';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
   import { useGlobeStore } from '@/stores/variants/globe.js';
@@ -91,6 +100,20 @@
     globe.globeImageUrl(globeSkinSourceMap[globeStore.skin]);
     globe.bumpImageUrl(globeBumpImageUrl);
 
+    // Configure material
+    const defaultMaterial = globe.globeMaterial() as MeshStandardMaterial;
+    const newMaterial = new MeshStandardMaterial({
+      map: defaultMaterial.map,
+      bumpMap: defaultMaterial.bumpMap,
+      bumpScale: defaultMaterial.bumpScale,
+      roughness: 1.0,
+      metalness: 0.0,
+    });
+    newMaterial.emissive.setHex(0x000000);
+    newMaterial.emissiveIntensity = 0.2;
+    newMaterial.needsUpdate = true;
+    globe.globeMaterial(newMaterial);
+
     // Configure markers
     globe.objectThreeObject((marker) => buildMarkerVisuals(marker as Marker));
     globe.objectLat((marker) => (marker as Marker).latitude);
@@ -133,6 +156,12 @@
       };
 
       globeStore.zoom = pov.altitude;
+    });
+
+    // Configure globe startup
+    globe.onGlobeReady(() => {
+      updateSolarTerminator(new Date());
+      toggleSolarTerminator(applicationStore.showSolarTerminator);
     });
   };
 
@@ -202,11 +231,11 @@
     globe.pointOfView({ lat: propagatedOmm.latitude, lng: propagatedOmm.longitude }, 500);
   };
 
-  /* Object visuals ///////////////////////////////////////////////////////////////////////////////////////////////// */
+  /* Build visuals ////////////////////////////////////////////////////////////////////////////////////////////////// */
 
   const buildUserPositionMarkerVisuals = () => {
     const userPositionGeometry = new SphereGeometry(1);
-    const userPositionMaterial = new MeshLambertMaterial({
+    const userPositionMaterial = new MeshBasicMaterial({
       color: userPositionMarkerColor,
     });
     const userPositionMesh = new Mesh(userPositionGeometry, userPositionMaterial);
@@ -220,13 +249,13 @@
     const focused = applicationStore.focusedNoradId === marker.noradId;
 
     const spaceObjectGeometry = new SphereGeometry(1);
-    const spaceObjectMaterial = new MeshLambertMaterial({
+    const spaceObjectMaterial = new MeshBasicMaterial({
       color: focused ? spaceObjectMarkerFocusColor : spaceObjectMarkerColor,
     });
     const spaceObjectMesh = new Mesh(spaceObjectGeometry, spaceObjectMaterial);
 
     const clickGeometry = new SphereGeometry(5);
-    const clickMaterial = new MeshLambertMaterial({
+    const clickMaterial = new MeshBasicMaterial({
       transparent: true,
       opacity: 0,
       depthWrite: false,
@@ -246,6 +275,64 @@
 
     return buildUserPositionMarkerVisuals();
   };
+
+  /* Update solar terminator //////////////////////////////////////////////////////////////////////////////////////// */
+
+  const sunLight = new DirectionalLight(0xffffff, 5);
+
+  const toggleSolarTerminator = (show: boolean) => {
+    if (!globe) {
+      return;
+    }
+
+    const scene = globe.scene();
+
+    if (show) {
+      scene.children.forEach((o) => {
+        if (o instanceof AmbientLight) {
+          o.intensity = 0.25;
+        } else if (o instanceof DirectionalLight && o !== sunLight) {
+          o.intensity = 0;
+        }
+      });
+
+      scene.add(sunLight);
+      scene.add(sunLight.target);
+    } else {
+      scene.children.forEach((o) => {
+        if (o instanceof AmbientLight) {
+          o.intensity = 3;
+        } else if (o instanceof DirectionalLight && o !== sunLight) {
+          o.intensity = 2;
+        }
+      });
+
+      scene.remove(sunLight);
+      scene.remove(sunLight.target);
+    }
+  };
+
+  const updateSolarTerminator = (date: Date) => {
+    const { latitude, longitude } = computeSubSolarPoint(date);
+
+    // Convert sub-solar lat/lon to Three.js cartesian coordinates (globe.gl convention)
+    const phi = ((90 - latitude) * Math.PI) / 180;
+    const theta = ((90 - longitude) * Math.PI) / 180;
+    const r = 100;
+
+    sunLight.position.set(r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
+
+    sunLight.target.position.set(0, 0, 0);
+    sunLight.target.updateMatrixWorld();
+  };
+
+  watch(
+    () => applicationStore.showSolarTerminator,
+    (newShowSolarTerminator) => {
+      updateSolarTerminator(new Date());
+      toggleSolarTerminator(newShowSolarTerminator);
+    },
+  );
 
   /* Update markers ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -286,14 +373,11 @@
     (newSelectedNoradIds, oldSelectedNoradIds) => {
       updateMarkers(new Date());
 
-      const addedNoradIds = newSelectedNoradIds.difference(oldSelectedNoradIds ?? new Set());
+      const addedNoradIds = newSelectedNoradIds.difference(oldSelectedNoradIds);
       const noradIdToView = addedNoradIds.values().next().value;
       if (noradIdToView) {
         moveCameraToNoradId(noradIdToView);
       }
-    },
-    {
-      immediate: true,
     },
   );
 
@@ -372,6 +456,7 @@
       if (nowTime - lastRenderTime >= renderIntervalMs) {
         lastRenderTime = nowTime;
         updateMarkers(now);
+        updateSolarTerminator(now);
       }
       animationFrame = requestAnimationFrame(tick);
     };

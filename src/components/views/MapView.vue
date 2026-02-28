@@ -6,7 +6,7 @@
   import { easeOut } from 'ol/easing.js';
   import Feature from 'ol/Feature.js';
   import { GeoJSON as GeoJsonFormatter } from 'ol/format.js';
-  import { type MultiPolygon } from 'ol/geom.js';
+  import { type MultiPolygon, Polygon } from 'ol/geom.js';
   import Point from 'ol/geom/Point.js';
   import { defaults as getDefaultInteractions } from 'ol/interaction.js';
   import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer.js';
@@ -33,6 +33,7 @@
     userPositionMarkerColor,
   } from '@/utilities/application.js';
   import { horizontalLimitFactor, mapSkinSourceMap } from '@/utilities/map.js';
+  import { computeSolarTerminator } from '@/utilities/solar-terminator.js';
 
   import { useApplicationStore } from '@/stores/variants/application.js';
   import { useMapStore } from '@/stores/variants/map.js';
@@ -61,10 +62,21 @@
   const tileLayer = new TileLayer({ source: mapSkinSourceMap[mapStore.skin] });
 
   const countryGeoJsonVectorSource = new VectorSource<Feature<MultiPolygon>>();
-  const countryGeoJsonLayer = new VectorLayer({ source: countryGeoJsonVectorSource });
+  const countryGeoJsonLayer = new VectorLayer({
+    source: countryGeoJsonVectorSource,
+  });
+
+  const solarTerminatorVectorSource = new VectorSource<Feature<Polygon>>();
+  const solarTerminatorLayer = new VectorLayer({
+    source: solarTerminatorVectorSource,
+    opacity: 0.66,
+    visible: applicationStore.showSolarTerminator,
+  });
 
   const markersVectorSource = new VectorSource<Feature<Point>>();
-  const markersLayer = new VectorLayer({ source: markersVectorSource });
+  const markersLayer = new VectorLayer({
+    source: markersVectorSource,
+  });
 
   const initializeMap = () => {
     if (!mapElement.value || map) {
@@ -106,6 +118,7 @@
     // Configure layers
     map.addLayer(tileLayer);
     map.addLayer(countryGeoJsonLayer);
+    map.addLayer(solarTerminatorLayer);
     map.addLayer(markersLayer);
 
     // Configure object focus
@@ -265,7 +278,15 @@
     });
   };
 
-  /* Object visuals ///////////////////////////////////////////////////////////////////////////////////////////////// */
+  /* Build visuals ////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  function buildSolarTerminatorVisuals() {
+    return new Style({
+      fill: new Fill({
+        color: 'black',
+      }),
+    });
+  }
 
   const buildUserPositionMarkerVisuals = () => {
     const userPositionStyle = new Style({
@@ -297,6 +318,30 @@
 
     return [spaceObjectStyle, clickStyle];
   };
+
+  /* Update solar terminator //////////////////////////////////////////////////////////////////////////////////////// */
+
+  const solarTerminatorFeature = new Feature<Polygon>();
+  solarTerminatorFeature.setStyle(buildSolarTerminatorVisuals());
+  solarTerminatorVectorSource.addFeature(solarTerminatorFeature);
+
+  const toggleSolarTerminator = (show: boolean) => {
+    solarTerminatorLayer.setVisible(show);
+  };
+
+  const updateSolarTerminator = (date: Date) => {
+    const coordinates = computeSolarTerminator(date);
+    const geometry = new Polygon([[...coordinates.map((coords) => fromLonLat(coords))]]);
+    solarTerminatorFeature.setGeometry(geometry);
+  };
+
+  watch(
+    () => applicationStore.showSolarTerminator,
+    () => {
+      updateSolarTerminator(new Date());
+      toggleSolarTerminator(applicationStore.showSolarTerminator);
+    },
+  );
 
   /* Update markers ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -376,14 +421,11 @@
     (newSelectedNoradIds, oldSelectedNoradIds) => {
       updateMarkers(new Date());
 
-      const addedNoradIds = newSelectedNoradIds.difference(oldSelectedNoradIds ?? new Set());
+      const addedNoradIds = newSelectedNoradIds.difference(oldSelectedNoradIds);
       const noradIdToView = addedNoradIds.values().next().value;
       if (noradIdToView) {
         moveCameraToNoradId(noradIdToView);
       }
-    },
-    {
-      immediate: true,
     },
   );
 
@@ -474,6 +516,7 @@
       if (nowTime - lastRenderTime >= renderIntervalMs) {
         lastRenderTime = nowTime;
         updateMarkers(now);
+        updateSolarTerminator(now);
       }
       animationFrame = requestAnimationFrame(tick);
     };

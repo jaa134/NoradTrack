@@ -41,6 +41,13 @@
         />
       </div>
       <div class="toggle">
+        <span class="label">Show solar terminator</span>
+        <input
+          v-model="applicationStore.showSolarTerminator"
+          type="checkbox"
+        />
+      </div>
+      <div class="toggle">
         <span class="label">Show country GeoJSON</span>
         <input
           v-model="applicationStore.showCountryGeoJson"
@@ -91,15 +98,16 @@
   .form {
     display: flex;
     flex-direction: column;
-    gap: var(--ja-spacing-x-small);
+    gap: var(--ja-spacing-small);
   }
 
   .toggle {
     position: relative;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: var(--ja-spacing-medium);
+    gap: var(--ja-spacing-2x-small);
     font-size: var(--ja-font-size-small);
   }
 
@@ -117,7 +125,7 @@
     position: relative;
     display: flex;
     align-items: center;
-    width: 160px;
+    width: 100%;
 
     select {
       width: 100%;
@@ -134,18 +142,6 @@
       position: absolute;
       right: var(--ja-spacing-small);
       pointer-events: none;
-    }
-  }
-
-  @media (max-width: 600px) {
-    .toggle {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--ja-spacing-2x-small);
-    }
-
-    .select-container {
-      width: 100%;
     }
   }
 </style>

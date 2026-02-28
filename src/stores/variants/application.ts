@@ -10,7 +10,7 @@ import { useNotify } from '@/composables/useNotify.js';
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
 const name = 'application';
-const version = 1;
+const version = 3;
 
 /* Store //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -40,6 +40,7 @@ export const useApplicationStore = createStore(
 
     const showSettingsDialog = ref(false);
     const showUserPosition = ref(true);
+    const showSolarTerminator = ref(true);
     const showCountryGeoJson = ref(false);
 
     const showLocationServicesDialog = ref(true);
@@ -71,6 +72,7 @@ export const useApplicationStore = createStore(
       focusedNoradId,
       showSettingsDialog,
       showUserPosition,
+      showSolarTerminator,
       showCountryGeoJson,
       showLocationServicesDialog,
       userPosition,
@@ -80,7 +82,7 @@ export const useApplicationStore = createStore(
     persist: [
       {
         storage: localStorage,
-        pick: ['showUserPosition', 'showCountryGeoJson'],
+        pick: ['showUserPosition', 'showSolarTerminator', 'showCountryGeoJson'],
       },
       {
         storage: sessionStorage,
