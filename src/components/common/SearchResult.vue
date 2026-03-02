@@ -1,7 +1,7 @@
 <script setup lang="ts">
   /* Imports //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  import { PhCheck } from '@phosphor-icons/vue';
+  import { PhCheckFat } from '@phosphor-icons/vue';
 
   import { type SpaceObject, spaceObjectMarkerFocusColor } from '@/utilities/application.js';
 
@@ -22,7 +22,7 @@
 
 <template>
   <button class="search-result">
-    <PhCheck
+    <PhCheckFat
       :class="[
         'icon',
         {
@@ -30,7 +30,7 @@
           focused: applicationStore.focusedNoradId === spaceObject.noradId,
         },
       ]"
-      weight="bold"
+      weight="fill"
     />
     <div class="header">
       <span class="name">{{ spaceObject.name }}</span>
@@ -59,6 +59,19 @@
 
     &:hover {
       background-color: var(--ja-control-background-color-hover);
+
+      .name {
+        color: var(--ja-color-neutral-900);
+      }
+
+      .id {
+        color: var(--ja-color-neutral-700);
+      }
+
+      .tag {
+        color: var(--ja-color-neutral-800);
+        background: var(--ja-color-blue-200);
+      }
     }
 
     &:focus-visible {
@@ -72,9 +85,10 @@
     left: var(--ja-spacing-medium);
     top: 50%;
     transform: translateY(-50%);
+    padding: var(--ja-spacing-3x-small);
     border: 1px solid var(--ja-color-neutral-400);
     border-radius: var(--ja-border-radius-small);
-    background-color: transparent;
+    background-color: var(--ja-color-neutral-0);
     color: transparent;
     font-size: var(--ja-font-size-medium);
     transition: all var(--ja-transition-fast) ease-in-out;
@@ -108,13 +122,15 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-    color: var(--ja-color-neutral-950);
+    color: var(--ja-color-neutral-800);
+    transition: var(--ja-transition-fast) ease-in-out;
   }
 
   .id {
     white-space: nowrap;
     font-size: var(--ja-font-size-small);
     color: var(--ja-color-neutral-600);
+    transition: var(--ja-transition-fast) ease-in-out;
   }
 
   .meta {
@@ -129,5 +145,6 @@
     background: var(--ja-color-blue-100);
     font-size: var(--ja-font-size-x-small);
     color: var(--ja-color-neutral-700);
+    transition: var(--ja-transition-fast) ease-in-out;
   }
 </style>

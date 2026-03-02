@@ -73,6 +73,7 @@ export const useSpaceObjectSearch = (searchText: Ref<string>) => {
 
   const results = shallowRef<SpaceObject[]>([]);
   const isLoading = shallowRef(false);
+  const isActive = shallowRef(false);
 
   let requestDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -103,6 +104,7 @@ export const useSpaceObjectSearch = (searchText: Ref<string>) => {
       results.value = [];
     } finally {
       isLoading.value = false;
+      isActive.value = true;
     }
   };
 
@@ -117,6 +119,7 @@ export const useSpaceObjectSearch = (searchText: Ref<string>) => {
       if (!newSearchText.trim()) {
         results.value = [];
         isLoading.value = false;
+        isActive.value = false;
         return;
       }
 
@@ -132,5 +135,6 @@ export const useSpaceObjectSearch = (searchText: Ref<string>) => {
   return {
     results: readonly(results),
     isLoading: readonly(isLoading),
+    isActive: readonly(isActive),
   };
 };

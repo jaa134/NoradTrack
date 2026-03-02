@@ -21,7 +21,7 @@
 
   /* Search ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const { results, isLoading } = useSpaceObjectSearch(searchText);
+  const { results, isLoading, isActive } = useSpaceObjectSearch(searchText);
 
   const displayedResults = computed(() => results.value.slice(0, 100));
 
@@ -138,7 +138,7 @@
           v-model="searchText"
           :class="{ 'has-selection': applicationStore.selectedNoradIds.size > 0 }"
           :loading="isLoading"
-          placeholder="Search objects"
+          placeholder="Search"
           @click="handleSearchClick"
           @keydown.enter="handleSearchKeydownEnter"
         >
@@ -156,10 +156,11 @@
       </ControlGroup>
 
       <div class="list-container">
-        <div class="loading-list">
-          <template v-if="showResults">
+        <template v-if="showResults && isActive">
+          <div class="dropdown-arrow"></div>
+          <div class="loading-list">
             <div
-              v-if="searchText && !isLoading && !results.length"
+              v-if="!results.length"
               class="empty-message"
             >
               No results found.
@@ -173,8 +174,8 @@
                 @click="toggleNoradId(spaceObject.noradId)"
               />
             </template>
-          </template>
-        </div>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -222,8 +223,19 @@
   }
 
   .list-container {
+    position: relative;
     flex: 1 1 auto;
     min-height: 0;
+  }
+
+  .dropdown-arrow {
+    position: absolute;
+    top: -6px;
+    left: calc(var(--control-width) / 2 - 7px);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 7px solid var(--ja-control-background-color);
+    pointer-events: none;
   }
 
   .loading-list {
