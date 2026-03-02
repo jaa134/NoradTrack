@@ -44,7 +44,7 @@ export const useApplicationStore = createStore(
     const showCountryGeoJson = ref(false);
 
     const showLocationServicesDialog = ref(true);
-    const userPosition = ref<UserPosition | null>(null);
+    const userPosition = shallowRef<UserPosition | null>(null);
 
     watch(
       showLocationServicesDialog,

@@ -17,7 +17,7 @@ interface CachedApiData {
 /* Constants //////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
 const name = 'search';
-const version = 3;
+const version = 4;
 
 /* Store //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -26,24 +26,53 @@ const _useSearchStore = createStore(
   version,
   () => {
     const searchText = ref('YAM-');
-    const apiData = ref<string | null>(null);
+    const compressedApiData = ref<string | null>(null);
 
     return {
       searchText,
-      apiData,
+      compressedApiData,
     };
   },
   {
     persist: [
       {
         storage: localStorage,
-        pick: ['searchText', 'apiData'],
+        pick: ['searchText', 'compressedApiData'],
       },
     ],
   },
 );
 
 /* Proxy //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+// Do this so we can efficiently compress/decompress api data and map it into something more useful
+
+const apiData = ref<CachedApiData | null>(null);
+
+const spaceObjects = computed<SpaceObject[] | null>(() => {
+  if (!apiData.value) {
+    return null;
+  }
+
+  return apiData.value.data.map((omm) => ({
+    name: omm.OBJECT_NAME,
+    noradId: omm.NORAD_CAT_ID,
+    objectId: omm.OBJECT_ID,
+    classification: omm.CLASSIFICATION_TYPE,
+    meanMotion: omm.MEAN_MOTION,
+    omm,
+  }));
+});
+
+const spaceObjectsLookupMap = computed<Record<string, SpaceObject>>(() => {
+  if (!spaceObjects.value) {
+    return {};
+  }
+
+  return spaceObjects.value.reduce<Record<string, SpaceObject>>((acc, spaceObject) => {
+    acc[spaceObject.noradId] = spaceObject;
+    return acc;
+  }, {});
+});
 
 export const useSearchStore = () => {
   const store = _useSearchStore();
@@ -57,50 +86,20 @@ export const useSearchStore = () => {
     },
   });
 
-  const parsedApiData = ref<CachedApiData | null>(
-    store.apiData ? (JSON.parse(decompressFromUTF16(store.apiData)) as CachedApiData) : null,
-  );
+  if (!apiData.value && store.compressedApiData) {
+    apiData.value = JSON.parse(decompressFromUTF16(store.compressedApiData)) as CachedApiData;
+  }
 
-  const apiData = computed<CachedApiData | null>({
-    get: () => {
-      return parsedApiData.value;
-    },
-    set: (value) => {
-      parsedApiData.value = value;
-      store.apiData = compressToUTF16(JSON.stringify(value));
-    },
-  });
-
-  const spaceObjects = computed<SpaceObject[] | null>(() => {
-    if (!apiData.value) {
-      return null;
-    }
-
-    return apiData.value.data.map((omm) => ({
-      name: omm.OBJECT_NAME,
-      noradId: omm.NORAD_CAT_ID,
-      objectId: omm.OBJECT_ID,
-      classification: omm.CLASSIFICATION_TYPE,
-      meanMotion: omm.MEAN_MOTION,
-      omm,
-    }));
-  });
-
-  const spaceObjectsLookupMap = computed<Record<string, SpaceObject>>(() => {
-    if (!spaceObjects.value) {
-      return {};
-    }
-
-    return spaceObjects.value.reduce<Record<string, SpaceObject>>((acc, spaceObject) => {
-      acc[spaceObject.noradId] = spaceObject;
-      return acc;
-    }, {});
-  });
+  const setCachedApiData = (value: CachedApiData) => {
+    apiData.value = value;
+    store.compressedApiData = compressToUTF16(JSON.stringify(value));
+  };
 
   return {
     searchText,
     apiData,
     spaceObjects,
     spaceObjectsLookupMap,
+    setCachedApiData,
   };
 };

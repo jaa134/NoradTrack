@@ -69,7 +69,7 @@ const filterSpaceObjects = (spaceObjects: SpaceObject[], query: string) => {
 export const useSpaceObjectSearch = (searchText: Ref<string>) => {
   const { notify } = useNotify();
 
-  const { apiData: cachedApiData, spaceObjects } = useSearchStore();
+  const { apiData: cachedApiData, spaceObjects, setCachedApiData } = useSearchStore();
 
   const results = shallowRef<SpaceObject[]>([]);
   const isLoading = shallowRef(false);
@@ -90,10 +90,10 @@ export const useSpaceObjectSearch = (searchText: Ref<string>) => {
         });
 
         apiData = await inflightRequest;
-        cachedApiData.value = {
+        setCachedApiData({
           expirationTimestamp: Date.now() + cacheExpirationThreshold,
           data: apiData,
-        };
+        });
       }
 
       results.value = filterSpaceObjects(spaceObjects.value ?? [], query);
