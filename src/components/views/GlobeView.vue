@@ -23,6 +23,7 @@
     getSpaceObjectDisplayText,
     getSpaceObjectMarker,
     getUserPositionMarker,
+    isSpaceObjectMarker,
     type Marker,
     propagateOmm,
     type SpaceObjectMarker,
@@ -123,7 +124,15 @@
 
     // Configure labels
     globe.htmlElementsData([]);
-    globe.htmlElement((marker) => createLabelElement((marker as Marker).label));
+    globe.htmlElement((marker) => {
+      let onClick: (() => void) | undefined;
+      if (isSpaceObjectMarker(marker as Marker)) {
+        onClick = () => {
+          focusNoradId((marker as SpaceObjectMarker).noradId);
+        };
+      }
+      return createLabelElement((marker as Marker).label, onClick);
+    });
     globe.htmlLat((marker) => (marker as Marker).latitude);
     globe.htmlLng((marker) => (marker as Marker).longitude);
     globe.htmlAltitude((marker) => (marker as Marker).altitude / earthRadius);
@@ -134,11 +143,20 @@
     globe.polygonSideColor(() => 'rgba(0, 0, 0, 0)');
     globe.polygonStrokeColor(() => countryGeoJsonColor);
 
-    // Configure object focus
-    globe.onObjectClick((object) => {
-      if ('noradId' in object && typeof object.noradId === 'number') {
-        focusNoradId(object.noradId);
+    // Configure marker focus
+    globe.onObjectClick((marker) => {
+      if (isSpaceObjectMarker(marker as Marker)) {
+        focusNoradId((marker as SpaceObjectMarker).noradId);
       }
+    });
+
+    // Configure cursor style
+    globe.onObjectHover((marker) => {
+      if (!globe) {
+        return;
+      }
+      const renderer = globe.renderer();
+      renderer.domElement.style.cursor = !!marker && isSpaceObjectMarker(marker as Marker) ? 'pointer' : 'grab';
     });
 
     // Configure POV tracking
@@ -269,7 +287,7 @@
   };
 
   const buildMarkerVisuals = (marker: Marker) => {
-    if ('noradId' in marker) {
+    if (isSpaceObjectMarker(marker)) {
       return buildSpaceObjectMarkerVisuals(marker);
     }
 

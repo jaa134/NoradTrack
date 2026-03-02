@@ -25,6 +25,7 @@
     getSpaceObjectDisplayText,
     getSpaceObjectMarker,
     getUserPositionMarker,
+    isSpaceObjectMarker,
     type Marker,
     propagateOmm,
     type SpaceObjectMarker,
@@ -121,7 +122,7 @@
     map.addLayer(solarTerminatorLayer);
     map.addLayer(markersLayer);
 
-    // Configure object focus
+    // Configure marker focus
     map.on('singleclick', (event) => {
       if (!map) {
         return;
@@ -150,7 +151,7 @@
       map.getTargetElement().style.cursor = 'pointer';
     });
 
-    // Configure position tracking
+    // Configure POV tracking
     map.on('moveend', () => {
       if (!map) {
         return;
@@ -348,11 +349,18 @@
   const createFeatureOverlays = (marker: Marker) => {
     const overlays = [];
 
+    let onClick: (() => void) | undefined;
+    if (isSpaceObjectMarker(marker)) {
+      onClick = () => {
+        focusNoradId(marker.noradId);
+      };
+    }
+
     for (let i = 0; i < horizontalLimitFactor; i++) {
       const longitudeOffset = (i - Math.floor(horizontalLimitFactor / 2)) * 360;
       const adjustedLongitude = marker.longitude + longitudeOffset;
       const overlay = new Overlay({
-        element: createLabelElement(marker.label),
+        element: createLabelElement(marker.label, onClick),
         positioning: 'center-center',
         stopEvent: false,
       });

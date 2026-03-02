@@ -44,7 +44,7 @@ export const spaceObjectMarkerFocusColor = 'rgb(255, 45, 149)';
 
 export const countryGeoJsonColor = 'rgb(255, 255, 0)';
 
-export const createLabelElement = (text: string) => {
+export const createLabelElement = (text: string, onClick?: () => void) => {
   const label = document.createElement('div');
   label.textContent = text;
   label.style.position = 'absolute';
@@ -60,9 +60,17 @@ export const createLabelElement = (text: string) => {
   label.style.whiteSpace = 'nowrap';
 
   const wrapper = document.createElement('div');
-  wrapper.style.position = 'relative';
-  wrapper.style.pointerEvents = 'none';
   wrapper.appendChild(label);
+
+  wrapper.style.position = 'relative';
+  if (onClick) {
+    wrapper.style.cursor = 'pointer';
+    wrapper.style.pointerEvents = 'auto';
+    wrapper.addEventListener('click', onClick);
+  } else {
+    wrapper.style.pointerEvents = 'none';
+  }
+
   return wrapper;
 };
 
@@ -111,6 +119,10 @@ export interface UserPositionMarker extends MarkerBase {
 }
 
 export type Marker = SpaceObjectMarker | UserPositionMarker;
+
+export const isSpaceObjectMarker = (marker: Marker): marker is SpaceObjectMarker => {
+  return 'noradId' in marker && typeof marker.noradId === 'number';
+};
 
 export const getUserPositionMarker = (userPosition: UserPosition): UserPositionMarker => {
   return {
