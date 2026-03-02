@@ -25,6 +25,14 @@
   const mapStore = useMapStore();
 
   const globeStore = useGlobeStore();
+
+  /* Reset ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+  const resetApplicationData = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.reload();
+  };
 </script>
 
 <template>
@@ -48,7 +56,7 @@
         />
       </div>
       <div class="toggle">
-        <span class="label">Show country GeoJSON</span>
+        <span class="label">Show country borders</span>
         <input
           v-model="applicationStore.showCountryGeoJson"
           type="checkbox"
@@ -91,6 +99,13 @@
         </div>
       </div>
     </div>
+
+    <button
+      class="reset-button"
+      @click="resetApplicationData"
+    >
+      Reset application data
+    </button>
   </BasicDialog>
 </template>
 
@@ -143,5 +158,17 @@
       right: var(--ja-spacing-small);
       pointer-events: none;
     }
+  }
+
+  .reset-button {
+    margin-top: var(--ja-spacing-3x-large);
+    padding: var(--ja-spacing-small) 0;
+    width: 100%;
+    border: none;
+    border-radius: var(--ja-control-border-radius-round);
+    background-color: var(--ja-color-danger-500);
+    color: var(--ja-color-neutral-0);
+    font-size: var(--ja-font-size-small);
+    font-weight: var(--ja-font-weight-bold);
   }
 </style>
