@@ -1,7 +1,7 @@
 /* Imports ////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
 import Fuse from 'fuse.js';
-import { readonly, type Ref, shallowRef, watch } from 'vue';
+import { computed, type Ref, ref, watch } from 'vue';
 
 import { type SpaceObject } from '@/utilities/application.js';
 import { CelestrakResponseSchema, type OrbitMeanElementsMessageV3 } from '@/utilities/search.js';
@@ -18,7 +18,7 @@ const searchDebounceDelay = 250; // 250ms
 
 /* Request tracking ///////////////////////////////////////////////////////////////////////////////////////////////// */
 
-let inflightRequest: Promise<OrbitMeanElementsMessageV3[]> | null = null;
+const inflightRequest = ref<Promise<OrbitMeanElementsMessageV3[]> | null>(null);
 
 /* Fetch //////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
@@ -35,7 +35,8 @@ const fetchCelestrakApiData = async (): Promise<OrbitMeanElementsMessageV3[]> =>
 
   try {
     const data = JSON.parse(rawBody) as unknown;
-    return CelestrakResponseSchema.parse(data);
+    const parsedData = CelestrakResponseSchema.parse(data);
+    return parsedData.sort((a, b) => b.NORAD_CAT_ID - a.NORAD_CAT_ID);
   } catch (error) {
     throw new Error('Failed to parse Celestrak API response.', { cause: error });
   }
@@ -71,70 +72,67 @@ export const useSpaceObjectSearch = (searchText: Ref<string>) => {
 
   const { apiData: cachedApiData, spaceObjects, setCachedApiData } = useSearchStore();
 
-  const results = shallowRef<SpaceObject[]>([]);
-  const isLoading = shallowRef(false);
-  const isActive = shallowRef(false);
+  watch(
+    searchText,
+    async () => {
+      if (inflightRequest.value || (cachedApiData.value && Date.now() <= cachedApiData.value.expirationTimestamp)) {
+        return;
+      }
 
-  let requestDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-  const search = async (query: string) => {
-    isLoading.value = true;
-
-    try {
-      let apiData: OrbitMeanElementsMessageV3[];
-
-      if (cachedApiData.value && Date.now() < cachedApiData.value.expirationTimestamp) {
-        apiData = cachedApiData.value.data;
-      } else {
-        inflightRequest ??= fetchCelestrakApiData().finally(() => {
-          inflightRequest = null;
+      try {
+        inflightRequest.value ??= fetchCelestrakApiData().finally(() => {
+          inflightRequest.value = null;
         });
 
-        apiData = await inflightRequest;
+        const apiData = await inflightRequest.value;
         setCachedApiData({
           expirationTimestamp: Date.now() + cacheExpirationThreshold,
           data: apiData,
         });
+      } catch (error) {
+        console.error(error);
+        notify('error', 'Failed to fetch space objects.');
+        setCachedApiData(null);
       }
-
-      results.value = filterSpaceObjects(spaceObjects.value ?? [], query);
-    } catch (error) {
-      console.error(error);
-      notify('error', 'Failed to fetch space objects.');
-      results.value = [];
-    } finally {
-      isLoading.value = false;
-      isActive.value = true;
-    }
-  };
-
-  watch(
-    () => searchText.value,
-    (newSearchText) => {
-      if (requestDebounceTimer) {
-        clearTimeout(requestDebounceTimer);
-        requestDebounceTimer = null;
-      }
-
-      if (!newSearchText.trim()) {
-        results.value = [];
-        isLoading.value = false;
-        isActive.value = false;
-        return;
-      }
-
-      requestDebounceTimer = setTimeout(() => {
-        void search(newSearchText);
-      }, searchDebounceDelay);
     },
     {
       immediate: true,
     },
   );
 
+  const debouncedSearchText = ref(searchText.value);
+  let searchTextTimeout: ReturnType<typeof setTimeout>;
+
+  watch(searchText, (newSearchText) => {
+    clearTimeout(searchTextTimeout);
+
+    if (!newSearchText) {
+      debouncedSearchText.value = newSearchText;
+      return;
+    }
+
+    searchTextTimeout = setTimeout(() => {
+      debouncedSearchText.value = newSearchText;
+    }, searchDebounceDelay);
+  });
+
+  const results = computed(() => {
+    if (!spaceObjects.value) {
+      return [];
+    }
+
+    if (!debouncedSearchText.value) {
+      return spaceObjects.value;
+    }
+
+    return filterSpaceObjects(spaceObjects.value, debouncedSearchText.value);
+  });
+
+  // TODO: is loading not going to false???
+  const isLoading = computed(() => !!inflightRequest.value);
+
   return {
-    results: readonly(results),
-    isLoading: readonly(isLoading),
-    isActive: readonly(isActive),
+    results,
+    isLoading,
   };
 };

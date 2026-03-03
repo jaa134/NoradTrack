@@ -21,7 +21,7 @@
 
   /* Search ///////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-  const { results, isLoading, isActive } = useSpaceObjectSearch(searchText);
+  const { results, isLoading } = useSpaceObjectSearch(searchText);
 
   const displayedResults = computed(() => results.value.slice(0, 100));
 
@@ -156,7 +156,7 @@
       </ControlGroup>
 
       <div class="list-container">
-        <template v-if="showResults && isActive">
+        <template v-if="showResults">
           <div class="dropdown-arrow"></div>
           <div class="loading-list">
             <div

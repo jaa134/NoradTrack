@@ -90,9 +90,9 @@ export const useSearchStore = () => {
     apiData.value = JSON.parse(decompressFromUTF16(store.compressedApiData)) as CachedApiData;
   }
 
-  const setCachedApiData = (value: CachedApiData) => {
+  const setCachedApiData = (value: CachedApiData | null) => {
     apiData.value = value;
-    store.compressedApiData = compressToUTF16(JSON.stringify(value));
+    store.compressedApiData = value ? compressToUTF16(JSON.stringify(value)) : null;
   };
 
   return {
